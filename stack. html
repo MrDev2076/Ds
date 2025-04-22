@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stack Visualizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center py-10">
+  <h2 class="text-3xl font-bold mb-6">Stack Visualizer</h2>
+
+  <div class="w-full max-w-md px-4">
+    <div class="flex flex-col sm:flex-row gap-2 mb-4">
+      <input type="text" id="stackInput" placeholder="Enter value" class="flex-1 px-3 py-2 border rounded-md" />
+      <button onclick="pushStack()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Push</button>
+      <button onclick="popStack()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Pop</button>
+    </div>
+    <div class="flex flex-wrap gap-2 mb-4 justify-center">
+      <button onclick="peekStack()" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Peek</button>
+      <button onclick="checkIsEmpty()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Is Empty?</button>
+      <button onclick="displayStack()" class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800">Display</button>
+    </div>
+  </div>
+
+  <div class="flex flex-col md:flex-row gap-10 justify-center w-full px-4">
+    <div class="flex-1">
+      <h3 class="text-xl font-semibold mb-2">Active Stack</h3>
+      <div id="stack" class="border border-gray-400 bg-white p-4 rounded shadow min-h-[200px] flex flex-col items-center gap-2"></div>
+    </div>
+    <div class="flex-1">
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="text-xl font-semibold">Removed Elements</h3>
+        <button onclick="clearRemoved()" class="bg-red-500 text-white px-3 py-1 text-sm rounded hover:bg-red-600">Clear</button>
+      </div>
+      <div id="removedStack" class="border border-gray-400 bg-white p-4 rounded shadow min-h-[200px] flex flex-col items-center gap-2"></div>
+    </div>
+  </div>
+
+  <div id="output" class="mt-6 text-lg font-medium text-gray-800"></div>
+
+  <script>
+    class Stack {
+      constructor() {
+        this.items = [];
+      }
+      push(item) {
+        this.items.push(item);
+      }
+      pop() {
+        return this.items.pop();
+      }
+      peek() {
+        return this.items[this.items.length - 1];
+      }
+      isEmpty() {
+        return this.items.length === 0;
+      }
+      display() {
+        return [...this.items];
+      }
+      clear() {
+        this.items = [];
+      }
+    }
+
+    const stack = new Stack();
+    const removed = new Stack();
+
+    function updateStackUI() {
+      const stackContainer = document.getElementById('stack');
+      stackContainer.innerHTML = '';
+      stack.display().forEach(item => {
+        const box = document.createElement('div');
+        box.className = 'bg-green-500 text-white text-center py-2 px-4 rounded shadow';
+        box.textContent = item;
+        stackContainer.prepend(box); // newest at the top
+      });
+    }
+
+    function updateRemovedStackUI() {
+      const removedContainer = document.getElementById('removedStack');
+      removedContainer.innerHTML = '';
+      removed.display().forEach(item => {
+        const box = document.createElement('div');
+        box.className = 'bg-red-500 text-white text-center py-2 px-4 rounded shadow';
+        box.textContent = item;
+        removedContainer.prepend(box); // newest at the top
+      });
+    }
+
+    function pushStack() {
+      const input = document.getElementById('stackInput').value.trim();
+      if (input === '') return alert("Enter a value");
+      stack.push(input);
+      updateStackUI();
+      document.getElementById('stackInput').value = '';
+    }
+
+    function popStack() {
+      const popped = stack.pop();
+      if (popped !== undefined) {
+        removed.push(popped);
+        document.getElementById('output').innerText = `Popped: ${popped}`;
+      } else {
+        document.getElementById('output').innerText = 'Stack is empty';
+      }
+      updateStackUI();
+      updateRemovedStackUI();
+    }
+
+    function peekStack() {
+      const top = stack.peek();
+      document.getElementById('output').innerText = top ? `Top Element: ${top}` : 'Stack is empty';
+    }
+
+    function checkIsEmpty() {
+      document.getElementById('output').innerText = stack.isEmpty() ? 'Stack is empty' : 'Stack is not empty';
+    }
+
+    function displayStack() {
+      const items = stack.display();
+      document.getElementById('output').innerText = `Stack: [${items.join(', ')}]`;
+    }
+
+    function clearRemoved() {
+      removed.clear();
+      updateRemovedStackUI();
+      document.getElementById('output').innerText = 'Removed stack cleared';
+    }
+  </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stack Visualizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center py-10">
+  <h2 class="text-3xl font-bold mb-6">Stack Visualizer</h2>
+
+  <div class="w-full max-w-md px-4">
+    <div class="flex flex-col sm:flex-row gap-2 mb-4">
+      <input type="text" id="stackInput" placeholder="Enter value" class="flex-1 px-3 py-2 border rounded-md" />
+      <button onclick="pushStack()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Push</button>
+      <button onclick="popStack()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Pop</button>
+    </div>
+    <div class="flex flex-wrap gap-2 mb-4 justify-center">
+      <button onclick="peekStack()" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Peek</button>
+      <button onclick="checkIsEmpty()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Is Empty?</button>
+      <button onclick="displayStack()" class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800">Display</button>
+    </div>
+  </div>
+
+  <div class="flex flex-col md:flex-row gap-10 justify-center w-full px-4">
+    <div class="flex-1">
+      <h3 class="text-xl font-semibold mb-2">Active Stack</h3>
+      <div id="stack" class="border border-gray-400 bg-white p-4 rounded shadow min-h-[200px] flex flex-col items-center gap-2"></div>
+    </div>
+    <div class="flex-1">
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="text-xl font-semibold">Removed Elements</h3>
+        <button onclick="clearRemoved()" class="bg-red-500 text-white px-3 py-1 text-sm rounded hover:bg-red-600">Clear</button>
+      </div>
+      <div id="removedStack" class="border border-gray-400 bg-white p-4 rounded shadow min-h-[200px] flex flex-col items-center gap-2"></div>
+    </div>
+  </div>
+
+  <div id="output" class="mt-6 text-lg font-medium text-gray-800"></div>
+
+  <script>
+    class Stack {
+      constructor() {
+        this.items = [];
+      }
+      push(item) {
+        this.items.push(item);
+      }
+      pop() {
+        return this.items.pop();
+      }
+      peek() {
+        return this.items[this.items.length - 1];
+      }
+      isEmpty() {
+        return this.items.length === 0;
+      }
+      display() {
+        return [...this.items];
+      }
+      clear() {
+        this.items = [];
+      }
+    }
+
+    const stack = new Stack();
+    const removed = new Stack();
+
+    function updateStackUI() {
+      const stackContainer = document.getElementById('stack');
+      stackContainer.innerHTML = '';
+      stack.display().forEach(item => {
+        const box = document.createElement('div');
+        box.className = 'bg-green-500 text-white text-center py-2 px-4 rounded shadow';
+        box.textContent = item;
+        stackContainer.prepend(box); // newest at the top
+      });
+    }
+
+    function updateRemovedStackUI() {
+      const removedContainer = document.getElementById('removedStack');
+      removedContainer.innerHTML = '';
+      removed.display().forEach(item => {
+        const box = document.createElement('div');
+        box.className = 'bg-red-500 text-white text-center py-2 px-4 rounded shadow';
+        box.textContent = item;
+        removedContainer.prepend(box); // newest at the top
+      });
+    }
+
+    function pushStack() {
+      const input = document.getElementById('stackInput').value.trim();
+      if (input === '') return alert("Enter a value");
+      stack.push(input);
+      updateStackUI();
+      document.getElementById('stackInput').value = '';
+    }
+
+    function popStack() {
+      const popped = stack.pop();
+      if (popped !== undefined) {
+        removed.push(popped);
+        document.getElementById('output').innerText = `Popped: ${popped}`;
+      } else {
+        document.getElementById('output').innerText = 'Stack is empty';
+      }
+      updateStackUI();
+      updateRemovedStackUI();
+    }
+
+    function peekStack() {
+      const top = stack.peek();
+      document.getElementById('output').innerText = top ? `Top Element: ${top}` : 'Stack is empty';
+    }
+
+    function checkIsEmpty() {
+      document.getElementById('output').innerText = stack.isEmpty() ? 'Stack is empty' : 'Stack is not empty';
+    }
+
+    function displayStack() {
+      const items = stack.display();
+      document.getElementById('output').innerText = `Stack: [${items.join(', ')}]`;
+    }
+
+    function clearRemoved() {
+      removed.clear();
+      updateRemovedStackUI();
+      document.getElementById('output').innerText = 'Removed stack cleared';
+    }
+  </script>
+</body>
+</html>
