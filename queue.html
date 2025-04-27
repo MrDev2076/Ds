@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Search & Sort Visualizer</title>
+  <link rel="shortcut icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMeSGODJy2WVfOoz2iHZBMgdlus6LelNXXuw&s" type="image/x-icon">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-start py-10 px-4">
+  <h1 class="text-3xl font-bold mb-6 text-center">Search & Sort Visualizer</h1>
+
+  <div class="w-full max-w-xl bg-white shadow-xl rounded-2xl p-6">
+    <!-- Dynamic Input for List and Key -->
+    <div class="mb-4 flex gap-4">
+      <input id="arrayInput" type="text" placeholder="Enter array (comma separated)" class="flex-1 p-2 border rounded-xl">
+      <button onclick="setArray()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl">Set Array</button>
+    </div>
+    
+    <div class="mb-4 flex gap-4">
+      <input id="searchInput" type="text" placeholder="Enter search key" class="flex-1 p-2 border rounded-xl">
+      <button onclick="linearSearch()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl">Linear Search</button>
+      <button onclick="binarySearch()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl">Binary Search</button>
+    </div>
+
+    <!-- Bubble Sort Button -->
+    <div class="mb-4">
+      <button onclick="bubbleSort()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl">Bubble Sort</button>
+    </div>
+
+    <!-- Array Display -->
+    <div class="mt-6">
+      <h2 class="text-xl font-semibold mb-2">Array:</h2>
+      <div id="arrayContainer" class="flex gap-2 flex-wrap"></div>
+    </div>
+  </div>
+
+  <script>
+    let array = [];
+
+    // Function to set the array based on user input
+    function setArray() {
+      const input = document.getElementById('arrayInput').value.trim();
+      array = input.split(',').map(Number).filter(num => !isNaN(num));
+      renderArray();
+    }
+
+    // Render the array visually
+    function renderArray() {
+      const container = document.getElementById('arrayContainer');
+      container.innerHTML = '';
+      array.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = `px-4 py-2 rounded-xl text-white font-bold shadow transition-all duration-300 bg-blue-500`;
+        div.innerText = item;
+        container.appendChild(div);
+      });
+    }
+
+    // Linear Search Function
+    async function linearSearch() {
+      const searchKey = document.getElementById('searchInput').value.trim();
+      if (!searchKey) return;
+
+      let found = false;
+      const key = Number(searchKey);
+      for (let i = 0; i < array.length; i++) {
+        const block = document.getElementById('arrayContainer').children[i];
+        block.classList.add("bg-yellow-400"); // Highlight current item
+        if (array[i] === key) {
+          block.classList.replace("bg-yellow-400", "bg-green-500"); // Highlight found item
+          found = true;
+          break;
+        }
+        await delay(1000); // Delay for animation effect
+        block.classList.replace("bg-yellow-400", "bg-blue-500");
+      }
+      if (!found) {
+        alert("Value not found in the array!");
+      }
+    }
+
+    // Binary Search Function
+    async function binarySearch() {
+      const searchKey = document.getElementById('searchInput').value.trim();
+      if (!searchKey) return;
+
+      const key = Number(searchKey);
+      let low = 0, high = array.length - 1;
+
+      while (low <= high) {
+        const mid = Math.floor((low + high) / 2);
+        const block = document.getElementById('arrayContainer').children[mid];
+        block.classList.add("bg-yellow-400"); // Highlight current item
+        await delay(1000);
+
+        if (array[mid] === key) {
+          block.classList.replace("bg-yellow-400", "bg-green-500"); // Highlight found item
+          return;
+        } else if (array[mid] < key) {
+          low = mid + 1;
+        } else {
+          high = mid - 1;
+        }
+
+        block.classList.replace("bg-yellow-400", "bg-blue-500");
+      }
+      alert("Value not found in the array!");
+    }
+
+    // Bubble Sort Function
+    async function bubbleSort() {
+      let n = array.length;
+      let swapped;
+
+      for (let i = 0; i < n; i++) {
+        swapped = false;
+        for (let j = 0; j < n - i - 1; j++) {
+          const block1 = document.getElementById('arrayContainer').children[j];
+          const block2 = document.getElementById('arrayContainer').children[j + 1];
+
+          block1.classList.add("bg-yellow-400"); // Highlight current pair
+          block2.classList.add("bg-yellow-400");
+
+          if (array[j] > array[j + 1]) {
+            // Swap the elements
+            [array[j], array[j + 1]] = [array[j + 1], array[j]];
+
+            renderArray(); // Re-render the array after swapping
+            swapped = true;
+            await delay(1000); // Delay for animation
+          }
+
+          block1.classList.remove("bg-yellow-400");
+          block2.classList.remove("bg-yellow-400");
+        }
+        if (!swapped) break;
+      }
+    }
+
+    // Delay function to control animation speed
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+  </script>
+</body>
+</html>

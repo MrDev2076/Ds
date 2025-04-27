@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Explore Data Structures</title>
+  <link rel="icon" href="images/favicon.png" type="image/png"> <!-- Tab icon -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Extra Glassmorphism Effect */
+    .glass {
+      background: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 min-h-screen flex flex-col">
+
+  <!-- Navbar -->
+  <nav class="flex items-center justify-between px-6 py-4 bg-white/30 glass shadow-md sticky top-0 z-50">
+    <div class="text-2xl font-bold text-indigo-800">DS Visualizer</div>
+    <div class="space-x-6 text-indigo-700 font-semibold">
+      <a href="#" class="hover:text-indigo-900 transition">Home</a>
+      <a href="about.html" class="hover:text-indigo-900 transition">About</a>
+      <a href="contact.html" class="hover:text-indigo-900 transition">Contact</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="flex-1 p-8">
+    <h1 class="text-4xl font-bold text-center mb-12 text-indigo-800 drop-shadow-lg">Explore Data Structures</h1>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10">
+      
+      <!-- Stack Card -->
+      <a href="/DS_Viz/Ds/stack.html" class="block glass rounded-2xl shadow-lg hover:scale-105 transform transition-all p-6 text-center">
+        <img src="https://deen3evddmddt.cloudfront.net/uploads/content-images/what-is-stack.webp" alt="Stack" class="w-full h-40 object-contain mb-4">
+        <h2 class="text-2xl font-semibold text-indigo-700">Stack</h2>
+      </a>
+      <!-- Stack Card -->
+      <a href="/DS_Viz/Ds/stack_compiler.html" class="block glass rounded-2xl shadow-lg hover:scale-105 transform transition-all p-6 text-center">
+        <img src="https://media.geeksforgeeks.org/wp-content/uploads/20240606180325/What-is-Stack-(1).webp" alt="Stack" class="w-full h-40 object-contain mb-4">
+        <h2 class="text-2xl font-semibold text-indigo-700">Stack 2</h2>
+      </a>
+
+      <!-- Queue Card -->
+      <a href="/DS_Viz/Ds/queue.html" class="block glass rounded-2xl shadow-lg hover:scale-105 transform transition-all p-6 text-center">
+        <img src="https://cdn.educba.com/academy/wp-content/uploads/2019/12/Queue-in-Data-Structure.jpg" alt="Queue" class="w-full h-40 object-contain mb-4">
+        <h2 class="text-2xl font-semibold text-green-700">Queue</h2>
+      </a>
+
+      <!-- Tree Card -->
+      <a href="/DS_Viz/Ds/Tree.html" class="block glass rounded-2xl shadow-lg hover:scale-105 transform transition-all p-6 text-center">
+        <img src="https://uniquesoftwaredev.com/wp-content/uploads/2019/06/tree-data-1024x511.jpg" alt="Tree" class="w-full h-40 object-contain mb-4">
+        <h2 class="text-2xl font-semibold text-yellow-700">Tree</h2>
+      </a>
+
+      <!-- Searching Card -->
+      <a href="/DS_Viz/Ds/LiBi.html" class="block glass rounded-2xl shadow-lg hover:scale-105 transform transition-all p-6 text-center">
+        <img src="https://miro.medium.com/v2/resize:fit:1150/1*Am1QeUnXRiRMii5Inb3vOQ.jpeg" alt="Linked List" class="w-full h-40 object-contain mb-4">
+        <h2 class="text-2xl font-semibold text-pink-700">Searching and sorting</h2>
+      </a>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-center py-4 glass text-indigo-700 text-sm">
+    © 2025 DS Visualizer. All rights reserved.
+  </footer>
+
+</body>
+</html>

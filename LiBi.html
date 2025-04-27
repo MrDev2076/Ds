@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Search and Sort Visualizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-yellow-100 to-red-100 min-h-screen p-6 font-sans">
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">🔎 Search and Sort Visualizer</h1>
+    <div class="flex flex-col lg:flex-row justify-center items-center gap-4">
+      <input id="arrayInput" type="text" placeholder="Enter array (e.g. 1,3,5,7,9)" class="px-4 py-2 rounded border border-yellow-400 w-[300px]" />
+      <input id="targetInput" type="number" placeholder="Target Value" class="px-4 py-2 rounded border border-yellow-400 w-[150px]" />
+      <button onclick="updateArray()" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700">Update</button>
+    </div>
+    <p id="errorMsg" class="text-red-600 text-center mt-2 font-semibold"></p>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-6">
+    <!-- Code Display -->
+    <div>
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Python Code (Linear, Binary Search, Bubble Sort)</h2>
+      <textarea readonly id="codeDisplay" class="w-full h-[600px] p-4 border border-yellow-400 bg-white rounded-lg text-sm font-mono resize-none leading-relaxed">
+def linear_search(arr, target):
+    for i in range(len(arr)):
+        if arr[i] == target:
+            return i
+    return -1
+
+def binary_search(arr, target):
+    low = 0
+    high = len(arr) - 1
+    while low <= high:
+        mid = (low + high) // 2
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            low = mid + 1
+        else:
+            high = mid - 1
+    return -1
+
+def bubble_sort(arr):
+    for i in range(len(arr) - 1):
+        for j in range(0, len(arr) - i - 1):
+            if arr[j] > arr[j + 1]:
+                arr[j], arr[j + 1] = arr[j + 1], arr[j]
+    return arr
+
+arr = [1, 3, 5, 7, 9, 11, 13]
+target = 7
+
+print(linear_search(arr, target))
+print(binary_search(arr, target))
+print(bubble_sort(arr))
+      </textarea>
+
+      <div class="flex gap-4 mt-4">
+        <button onclick="runBubbleSort()" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">Run Bubble Sort</button>
+
+        <button onclick="runLinearSearch()" class="bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700">Run Linear Search</button>
+        <button onclick="runBinarySearch()" class="bg-yellow-600 text-white px-4 py-2 rounded shadow hover:bg-yellow-700">Run Binary Search</button>
+      </div>
+    </div>
+
+    <!-- Array Visualizer -->
+    <div>
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Array Visualizer</h2>
+      <div id="array" class="flex justify-center gap-3 p-6 bg-white border border-yellow-400 rounded-lg shadow h-[150px] items-end"></div>
+    </div>
+
+    <!-- Output Area -->
+    <div>
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Search/Sort Output</h2>
+      <div id="output" class="h-[600px] overflow-y-auto p-4 bg-white border border-yellow-400 rounded-lg text-sm font-mono whitespace-pre-wrap leading-relaxed"></div>
+    </div>
+  </div>
+
+  <script>
+    let data = [1, 3, 5, 7, 9, 11, 13];
+    let target = 7;
+    const arrayContainer = document.getElementById("array");
+    const output = document.getElementById("output");
+    const codeDisplay = document.getElementById("codeDisplay");
+    const errorMsg = document.getElementById("errorMsg");
+
+    let blockRefs = [];
+
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+
+    function renderArray() {
+      arrayContainer.innerHTML = "";
+      blockRefs = [];
+      data.forEach((num) => {
+        const el = document.createElement("div");
+        el.innerText = num;
+        el.className = "w-12 h-12 flex items-center justify-center text-lg font-bold bg-yellow-300 border border-yellow-700 rounded transition-all duration-500 ease-in-out";
+        blockRefs.push(el);
+        arrayContainer.appendChild(el);
+      });
+    }
+
+    function updateCodeDisplay() {
+      codeDisplay.value =
+`def linear_search(arr, target):
+    for i in range(len(arr)):
+        if arr[i] == target:
+            return i
+    return -1
+
+def binary_search(arr, target):
+    low = 0
+    high = len(arr) - 1
+    while low <= high:
+        mid = (low + high) // 2
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            low = mid + 1
+        else:
+            high = mid - 1
+    return -1
+
+def bubble_sort(arr):
+    for i in range(len(arr) - 1):
+        for j in range(0, len(arr) - i - 1):
+            if arr[j] > arr[j + 1]:
+                arr[j], arr[j + 1] = arr[j + 1], arr[j]
+    return arr
+
+arr = [${data.join(', ')}]
+target = ${target}
+
+print(linear_search(arr, target))
+print(binary_search(arr, target))
+print(bubble_sort(arr))`;
+    }
+
+    async function runBubbleSort() {
+      output.innerHTML = "🌀 Sorting array with Bubble Sort...\n";
+      for (let i = 0; i < data.length - 1; i++) {
+        for (let j = 0; j < data.length - i - 1; j++) {
+          blockRefs[j].classList.add("bg-blue-400");
+          blockRefs[j + 1].classList.add("bg-blue-400");
+          output.innerHTML += `Comparing ${data[j]} and ${data[j + 1]}\n`;
+          await delay(1000);
+
+          if (data[j] > data[j + 1]) {
+            // Visual swap with animation
+            blockRefs[j].classList.add("transition-all", "duration-500");
+            blockRefs[j + 1].classList.add("transition-all", "duration-500");
+
+            // Swap values in the array and animate movement
+            const temp = data[j];
+            data[j] = data[j + 1];
+            data[j + 1] = temp;
+
+            renderArray(); // Update blocks after swap
+            output.innerHTML += `🔁 Swapping ${data[j]} and ${data[j + 1]}\n`;
+            await delay(500); // Brief delay for swap animation
+          }
+
+          blockRefs[j].classList.remove("bg-blue-400");
+          blockRefs[j + 1].classList.remove("bg-blue-400");
+        }
+      }
+      output.innerHTML += `✅ Array sorted: [${data.join(", ")}]\n`;
+      renderArray();
+      updateCodeDisplay();
+    }
+
+    async function runLinearSearch() {
+      renderArray();
+      output.innerHTML = "🔍 Starting Linear Search...\n";
+      for (let i = 0; i < data.length; i++) {
+        blockRefs[i].classList.add("bg-blue-400");
+        output.innerHTML += `Checking index ${i} → ${data[i]}\n`;
+        await delay(1000);
+        if (data[i] === target) {
+          blockRefs[i].classList.replace("bg-blue-400", "bg-green-500");
+          output.innerHTML += `✅ Found at index ${i}\n`;
+          return;
+        }
+        blockRefs[i].classList.replace("bg-blue-400", "bg-red-300");
+      }
+      output.innerHTML += `❌ Not found\n`;
+    }
+
+    async function runBinarySearch() {
+      renderArray();
+      output.innerHTML = "🔍 Starting Binary Search...\n";
+      let low = 0;
+      let high = data.length - 1;
+
+      while (low <= high) {
+        const mid = Math.floor((low + high) / 2);
+        blockRefs[mid].classList.add("bg-blue-400");
+        output.innerHTML += `Checking index ${mid} → ${data[mid]}\n`;
+        await delay(1000);
+
+        if (data[mid] === target) {
+          blockRefs[mid].classList.replace("bg-blue-400", "bg-green-500");
+          output.innerHTML += `✅ Found at index ${mid}\n`;
+          return;
+        } else {
+          blockRefs[mid].classList.replace("bg-blue-400", "bg-red-300");
+          if (data[mid] < target) {
+            low = mid + 1;
+          } else {
+            high = mid - 1;
+          }
+        }
+      }
+      output.innerHTML += `❌ Not found\n`;
+    }
+
+    function updateArray() {
+      const inputArray = document.getElementById("arrayInput").value.split(",").map(Number);
+      target = Number(document.getElementById("targetInput").value);
+      if (inputArray.every(num => !isNaN(num))) {
+        data = inputArray;
+        errorMsg.innerHTML = "";
+        renderArray();
+        updateCodeDisplay();
+      } else {
+        errorMsg.innerHTML = "Please enter valid numbers in the array input!";
+      }
+    }
+
+    renderArray();
+    updateCodeDisplay();
+  </script>
+</body>
+</html>

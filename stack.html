@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyStructures -    Stack Visualizer</title>
+  <link rel="shortcut icon" href="data:image/jpeg;base64,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" type="image/x-icon">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-yellow-100 min-h-screen flex flex-col items-center py-10">
+  <h2 class="text-3xl font-bold mb-6">Stack Visualizer</h2>
+
+  <div class="w-full max-w-md px-4">
+    <div class="flex flex-col sm:flex-row gap-2 mb-4">
+      <input type="text" id="stackInput" placeholder="Enter value" class="flex-1 px-3 py-2 border rounded-md shadow-lg" />
+      <button onclick="pushStack()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Push</button>
+      <button onclick="popStack()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Pop</button>
+    </div>
+    <div class="flex flex-wrap gap-2 mb-4 justify-center">
+      <button onclick="peekStack()" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Peek</button>
+      <button onclick="checkIsEmpty()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Is Empty?</button>
+      <button onclick="displayStack()" class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800">Display</button>
+    </div>
+  </div>
+
+  <div class="flex flex-col md:flex-row gap-10 justify-center w-full px-4">
+    <div class="flex-1">
+      <h3 class="text-xl font-semibold mb-2">Active Stack</h3>
+      <div id="stack" class="border border-gray-400 bg-white p-4 rounded shadow min-h-[200px] flex flex-col items-center gap-2"></div>
+    </div>
+    <div class="flex-1">
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="text-xl font-semibold">Removed Elements</h3>
+        <button onclick="clearRemoved()" class="bg-red-500 text-white px-3 py-1 text-sm rounded hover:bg-red-600">Clear</button>
+      </div>
+      <div id="removedStack" class="border border-gray-400 bg-white p-4 rounded shadow min-h-[200px] flex flex-col items-center gap-2"></div>
+    </div>
+  </div>
+
+  <div id="output" class="mt-6 text-lg font-medium text-gray-800"></div>
+
+  <script>
+    class Stack {
+      constructor() {
+        this.items = [];
+      }
+      push(item) {
+        this.items.push(item);
+      }
+      pop() {
+        return this.items.pop();
+      }
+      peek() {
+        return this.items[this.items.length - 1];
+      }
+      isEmpty() {
+        return this.items.length === 0;
+      }
+      display() {
+        return [...this.items];
+      }
+      clear() {
+        this.items = [];
+      }
+    }
+
+    const stack = new Stack();
+    const removed = new Stack();
+
+    function updateStackUI() {
+      const stackContainer = document.getElementById('stack');
+      stackContainer.innerHTML = '';
+      stack.display().forEach(item => {
+        const box = document.createElement('div');
+        box.className = 'bg-green-500 text-white text-center py-2 px-4 rounded shadow';
+        box.textContent = item;
+        stackContainer.prepend(box); // newest at the top
+      });
+    }
+
+    function updateRemovedStackUI() {
+      const removedContainer = document.getElementById('removedStack');
+      removedContainer.innerHTML = '';
+      removed.display().forEach(item => {
+        const box = document.createElement('div');
+        box.className = 'bg-red-500 text-white text-center py-2 px-4 rounded shadow';
+        box.textContent = item;
+        removedContainer.prepend(box); // newest at the top
+      });
+    }
+
+    function pushStack() {
+      const input = document.getElementById('stackInput').value.trim();
+      if (input === '') return alert("Enter a value");
+      stack.push(input);
+      updateStackUI();
+      document.getElementById('stackInput').value = '';
+    }
+
+    function popStack() {
+      const popped = stack.pop();
+      if (popped !== undefined) {
+        removed.push(popped);
+        document.getElementById('output').innerText = `Popped: ${popped}`;
+      } else {
+        document.getElementById('output').innerText = 'Stack is empty';
+      }
+      updateStackUI();
+      updateRemovedStackUI();
+    }
+
+    function peekStack() {
+      const top = stack.peek();
+      document.getElementById('output').innerText = top ? `Top Element: ${top}` : 'Stack is empty';
+    }
+
+    function checkIsEmpty() {
+      document.getElementById('output').innerText = stack.isEmpty() ? 'Stack is empty' : 'Stack is not empty';
+    }
+
+    function displayStack() {
+      const items = stack.display();
+      document.getElementById('output').innerText = `Stack: [${items.join(', ')}]`;
+    }
+
+    function clearRemoved() {
+      removed.clear();
+      updateRemovedStackUI();
+      document.getElementById('output').innerText = 'Removed stack cleared';
+    }
+  </script>
+</body>
+</html>
