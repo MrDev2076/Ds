@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sorting Visualizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center py-10 px-4">
+
+  <h1 class="text-3xl font-bold mb-6 text-center">Selection, Quick & Bubble Sort Visualizer</h1>
+
+  <div class="w-full max-w-2xl bg-white p-6 rounded-2xl shadow-xl">
+    <div class="flex gap-4 mb-4">
+      <input id="arrayInput" type="text" placeholder="Enter numbers (comma separated)" class="flex-1 p-2 border rounded-xl">
+      <button onclick="setArray()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl">Set Array</button>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <button onclick="bubbleSort()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl">Bubble Sort</button>
+      <button onclick="selectionSort()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl">Selection Sort</button>
+      <button onclick="quickSortInit()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl">Quick Sort</button>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-semibold mb-2">Array:</h2>
+      <div id="arrayContainer" class="flex gap-2 flex-wrap"></div>
+    </div>
+  </div>
+
+  <script>
+    let array = [];
+
+    function setArray() {
+      const input = document.getElementById('arrayInput').value.trim();
+      array = input.split(',').map(Number).filter(num => !isNaN(num));
+      renderArray();
+    }
+
+    function renderArray(highlightIndexes = []) {
+      const container = document.getElementById('arrayContainer');
+      container.innerHTML = '';
+      array.forEach((value, i) => {
+        const div = document.createElement('div');
+        div.innerText = value;
+        div.className = `px-4 py-2 rounded-xl font-bold text-white shadow text-center transition-all duration-300 ${
+          highlightIndexes.includes(i) ? 'bg-yellow-500' : 'bg-blue-600'
+        }`;
+        container.appendChild(div);
+      });
+    }
+
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+    const animationDelay = 1000; // Increased delay for clearer visualization
+
+    async function bubbleSort() {
+      let n = array.length;
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n - i - 1; j++) {
+          renderArray([j, j + 1]);
+          await delay(animationDelay);
+          if (array[j] > array[j + 1]) {
+            [array[j], array[j + 1]] = [array[j + 1], array[j]];
+            renderArray([j, j + 1]);
+            await delay(animationDelay);
+          }
+        }
+      }
+      renderArray();
+    }
+
+    async function selectionSort() {
+      let n = array.length;
+      for (let i = 0; i < n; i++) {
+        let minIdx = i;
+        for (let j = i + 1; j < n; j++) {
+          renderArray([minIdx, j]);
+          await delay(animationDelay);
+          if (array[j] < array[minIdx]) {
+            minIdx = j;
+            renderArray([minIdx, j]);
+            await delay(animationDelay);
+          }
+        }
+        if (minIdx !== i) {
+          [array[i], array[minIdx]] = [array[minIdx], array[i]];
+        }
+      }
+      renderArray();
+    }
+
+    function quickSortInit() {
+      quickSort(0, array.length - 1);
+    }
+
+    async function quickSort(low, high) {
+      if (low < high) {
+        const pi = await partition(low, high);
+        await Promise.all([
+          quickSort(low, pi - 1),
+          quickSort(pi + 1, high)
+        ]);
+      }
+      renderArray();
+    }
+
+    async function partition(low, high) {
+      let pivot = array[high];
+      let i = low - 1;
+      for (let j = low; j < high; j++) {
+        renderArray([j, high]);
+        await delay(animationDelay);
+        if (array[j] < pivot) {
+          i++;
+          [array[i], array[j]] = [array[j], array[i]];
+          renderArray([i, j]);
+          await delay(animationDelay);
+        }
+      }
+      [array[i + 1], array[high]] = [array[high], array[i + 1]];
+      renderArray([i + 1, high]);
+      await delay(animationDelay);
+      return i + 1;
+    }
+  </script>
+</body>
+</html>
