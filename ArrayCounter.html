@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Student Tally</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Floating bubble animation */
+    @keyframes float {
+      0% { transform: translateY(0) scale(1); opacity: 0.8; }
+      50% { transform: translateY(-40px) scale(1.1); opacity: 1; }
+      100% { transform: translateY(0) scale(1); opacity: 0.8; }
+    }
+    .bubble { animation: float 6s ease-in-out infinite; }
+    .bubble:nth-child(2) { animation-delay: 2s; }
+    .bubble:nth-child(3) { animation-delay: 4s; }
+
+    /* Popup modal styling */
+    .modal { display: none; }
+    .modal.active { display: flex; }
+
+    /* Array visualization animations */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .animate-pulse-once { animation: pulse 0.5s ease-in-out; }
+    
+    /* Code tabs styling */
+    .code-tab { 
+      display: none;
+      background-color: #1e293b;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      overflow-x: auto;
+      max-height: 300px;
+    }
+    .code-tab.active { display: block; }
+    .tab-button {
+      background-color: #374151;
+      color: #d1d5db;
+      padding: 0.5rem 1rem;
+      border-top-left-radius: 0.5rem;
+      border-top-right-radius: 0.5rem;
+      cursor: pointer;
+    }
+    .tab-button.active {
+      background-color: #1e293b;
+      color: white;
+    }
+    pre {
+      margin: 0;
+      color: #e5e7eb;
+      font-family: monospace;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .keyword { color: #ff79c6; }
+    .type { color: #8be9fd; }
+    .function { color: #50fa7b; }
+    .string { color: #f1fa8c; }
+    .comment { color: #6272a4; }
+    .number { color: #bd93f9; }
+  </style>
+</head>
+<body class="relative min-h-screen flex items-center justify-center bg-black overflow-hidden">
+
+  <!-- Animated floating bubbles -->
+  <div class="absolute top-0 left-0 w-full h-full">
+    <svg class="absolute top-10 left-20 w-64 h-64 bubble blur-3xl opacity-40" fill="#3b82f6">
+      <circle cx="50%" cy="50%" r="150" />
+    </svg>
+    <svg class="absolute bottom-20 right-10 w-72 h-72 bubble blur-3xl opacity-30" fill="#1d4ed8">
+      <circle cx="50%" cy="50%" r="160" />
+    </svg>
+    <svg class="absolute top-1/2 left-1/3 w-80 h-80 bubble blur-3xl opacity-20" fill="#60a5fa">
+      <circle cx="50%" cy="50%" r="170" />
+    </svg>
+  </div>
+
+  <!-- Transparent gradient overlay -->
+  <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/80 backdrop-blur-sm"></div>
+
+  <!-- Landing Page Content -->
+  <div class="relative text-center px-6">
+    <h1 class="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600 drop-shadow-lg">
+      The Student Tally
+    </h1>
+    <p class="mt-6 text-lg md:text-xl text-gray-200 max-w-2xl mx-auto">
+      Simulate a student race tally program and visualize array operations in Java.
+    </p>
+
+    <button id="knowMoreBtn" class="mt-8 px-8 py-3 rounded-2xl font-semibold text-black bg-white/40 backdrop-blur-md transition-all duration-300 
+                   hover:bg-gradient-to-r hover:from-yellow-500 hover:to-black hover:text-white shadow-lg">
+      View Problem
+    </button>
+  </div>
+
+  <!-- Modal Popup -->
+  <div id="modal" class="modal fixed inset-0 bg-black/80 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="relative max-w-5xl w-full bg-white/10 rounded-2xl shadow-2xl p-8 text-white overflow-y-auto max-h-[90vh]">
+
+      <!-- Close Button -->
+      <button id="closeModal" class="absolute top-4 right-4 text-white bg-red-500 px-3 py-1 rounded-lg hover:bg-red-600">
+        ✕
+      </button>
+
+      <!-- Problem Statement -->
+      <h2 class="text-3xl font-bold text-yellow-400 mb-4">Problem Statement: The Student Tally</h2>
+      <p class="mb-4 text-lg">
+        You are tasked with creating a Java program that simulates a "race" among a group of students. The program should do the following:
+      </p>
+      
+      <ol class="list-decimal pl-6 mb-6 text-lg space-y-2">
+        <li><span class="font-semibold">Input Students:</span> Accept the total number of students and their names from the user. Store these names in an array.</li>
+        <li><span class="font-semibold">Simulate Race:</span> Create a second array of size 12. Populate this array by randomly picking names from the first array. This represents the "race" results.</li>
+        <li><span class="font-semibold">Count Occurrences:</span> Count the occurrences of each student's name in the "race" array.</li>
+        <li><span class="font-semibold">Find the Winner:</span> Identify and print the name of the student who appeared most frequently in the "race" array. In case of a tie, any one of the tied students can be printed as the winner.</li>
+      </ol>
+      
+      <div class="bg-gray-800 p-4 rounded-lg mb-6">
+        <h3 class="text-xl font-bold text-green-400 mb-2">Note:</h3>
+        <ul class="list-disc pl-6 space-y-1">
+          <li>You must use dynamic input for the number of students and their names</li>
+          <li>Use the java.util.Random class for the simulation</li>
+          <li>You are not allowed to use HashMap to solve this problem</li>
+          <li>The number of students (n) will be a positive integer</li>
+          <li>The names will be single words (no spaces)</li>
+          <li>The "race" array will always have a fixed size of 12</li>
+        </ul>
+      </div>
+
+      <div class="bg-gray-800 p-4 rounded-lg mb-6">
+        <h3 class="text-xl font-bold text-green-400 mb-2">Sample Input:</h3>
+        <p class="mb-1">Enter total no. of students: 5</p>
+        <p class="mb-1">Enter students' names:</p>
+        <p class="ml-4">Sudharshan</p>
+        <p class="ml-4">Radha</p>
+        <p class="ml-4">Nageshwar</p>
+        <p class="ml-4">Chandraki</p>
+        <p class="ml-4">Deepti</p>
+        
+        <h3 class="text-xl font-bold text-green-400 mt-4 mb-2">Sample Output:</h3>
+        <p class="mb-1">My Race: Radha Radha Sudharshan Radha Radha Radha Radha Sudharshan Radha Radha Nageshwar Deepthi</p>
+        <p class="mb-1">Sudharshan : 2</p>
+        <p class="mb-1">Radha : 8</p>
+        <p class="mb-1">Nageshwar : 2</p>
+        <p class="mb-1">Chandraki : 0</p>
+        <p class="mb-1">Deepti : 1</p>
+        <p class="mt-2 font-bold">Most Occurred Name: Radha (with 8 occurrences)</p>
+      </div>
+
+      <!-- Visualization Section -->
+      <div class="bg-gray-900/70 p-6 rounded-xl shadow-lg">
+        <div id="input-section" class="mb-8">
+          <div class="mb-4">
+            <label for="num-students" class="block text-gray-300 font-semibold mb-2">Enter total no. of students:</label>
+            <input type="number" id="num-students" value="5" min="1"
+              class="w-full p-2 border border-gray-300 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500">
+          </div>
+          <div class="mb-4">
+            <label for="student-names" class="block text-gray-300 font-semibold mb-2">Enter students' names (comma-separated):</label>
+            <input type="text" id="student-names" value="Sudharshan,Radha,Nageshwar,Chandraki,Deepti"
+              class="w-full p-2 border border-gray-300 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500">
+          </div>
+          <div class="flex gap-4">
+            <button id="run-button" class="flex-1 bg-yellow-500 text-black py-2 rounded-md hover:bg-yellow-600 transition-colors duration-300">
+              Run Simulation
+            </button>
+          </div>
+        </div>
+
+        <div id="simulation-section" class="hidden">
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold text-yellow-400 mb-4">Students</h2>
+            <div id="students-list" class="flex flex-wrap gap-2 text-center text-lg"></div>
+          </div>
+
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold text-yellow-400 mb-4">My Race</h2>
+            <div id="race-list" class="flex flex-wrap gap-2 text-center text-lg"></div>
+          </div>
+
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold text-yellow-400 mb-4">Student Occurrences</h2>
+            <div id="occurrence-list" class="flex flex-col gap-2"></div>
+          </div>
+
+          <div id="winner-section" class="mt-8 text-center text-2xl font-bold text-green-400 hidden">
+            <p>Most Occurred Name: <span id="winner-name"></span> (<span id="winner-count"></span> occurrences)</p>
+          </div>
+          
+          <div class="mt-8 text-center">
+            <button id="view-code-button" class="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors duration-300">
+              View Code
+            </button>
+          </div>
+        </div>
+        
+        <!-- Code Display Section -->
+        <div id="code-section" class="hidden mt-8">
+          <h2 class="text-2xl font-bold text-yellow-400 mb-4">Solution Code</h2>
+          
+          <div class="flex mb-2">
+            <button class="tab-button active" data-tab="java">Java</button>
+            <button class="tab-button" data-tab="python">Python</button>
+            <button class="tab-button" data-tab="c">C</button>
+            <button class="tab-button" data-tab="cpp">C++</button>
+          </div>
+          
+          <div id="java-tab" class="code-tab active">
+            <pre>
+<span class="keyword">import</span> java.util.Scanner;
+<span class="keyword">import</span> java.util.Random;
+
+<span class="keyword">public</span> <span class="keyword">class</span> <span class="type">StudentTally</span> {
+    <span class="keyword">public</span> <span class="type">static</span> <span class="type">void</span> <span class="function">main</span>(<span class="type">String</span>[] args) {
+        Scanner scanner = <span class="keyword">new</span> Scanner(System.in);
+        Random random = <span class="keyword">new</span> Random();
+        
+        <span class="comment">// Input number of students</span>
+        System.out.print(<span class="string">"Enter total no. of students: "</span>);
+        <span class="type">int</span> n = scanner.nextInt();
+        scanner.nextLine(); <span class="comment">// consume newline</span>
+        
+        <span class="type">String</span>[] students = <span class="keyword">new</span> <span class="type">String</span>[n];
+        
+        <span class="comment">// Input student names</span>
+        System.out.println(<span class="string">"Enter students' names:"</span>);
+        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i < n; i++) {
+            students[i] = scanner.nextLine();
+        }
+        
+        <span class="comment">// Create race array of size 12</span>
+        <span class="type">String</span>[] race = <span class="keyword">new</span> <span class="type">String</span>[<span class="number">12</span>];
+        
+        <span class="comment">// Populate race array with random student names</span>
+        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i < <span class="number">12</span>; i++) {
+            <span class="type">int</span> randomIndex = random.nextInt(n);
+            race[i] = students[randomIndex];
+        }
+        
+        <span class="comment">// Display race results</span>
+        System.out.print(<span class="string">"My Race: "</span>);
+        <span class="keyword">for</span> (<span class="type">String</span> name : race) {
+            System.out.print(name + <span class="string">" "</span>);
+        }
+        System.out.println();
+        
+        <span class="comment">// Count occurrences of each student</span>
+        <span class="type">int</span>[] counts = <span class="keyword">new</span> <span class="type">int</span>[n];
+        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i < n; i++) {
+            <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j < <span class="number">12</span>; j++) {
+                <span class="keyword">if</span> (students[i].equals(race[j])) {
+                    counts[i]++;
+                }
+            }
+            System.out.println(students[i] + <span class="string">" : "</span> + counts[i]);
+        }
+        
+        <span class="comment">// Find the student with maximum occurrences</span>
+        <span class="type">int</span> maxCount = <span class="number">0</span>;
+        <span class="type">String</span> winner = <span class="string">""</span>;
+        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i < n; i++) {
+            <span class="keyword">if</span> (counts[i] > maxCount) {
+                maxCount = counts[i];
+                winner = students[i];
+            }
+        }
+        
+        <span class="comment">// Display the winner</span>
+        System.out.println(<span class="string">"Most Occurred Name: "</span> + winner + <span class="string">" (with "</span> + maxCount + <span class="string">" occurrences)"</span>);
+        
+        scanner.close();
+    }
+}</pre>
+          </div>
+          
+          <div id="python-tab" class="code-tab">
+            <pre>
+<span class="keyword">import</span> random
+
+<span class="comment"># Input number of students</span>
+n = int(input(<span class="string">"Enter total no. of students: "</span>))
+
+students = []
+<span class="comment"># Input student names</span>
+print(<span class="string">"Enter students' names:"</span>)
+<span class="keyword">for</span> i <span class="keyword">in</span> range(n):
+    name = input()
+    students.append(name)
+
+<span class="comment"># Create race list of size 12</span>
+race = []
+
+<span class="comment"># Populate race list with random student names</span>
+<span class="keyword">for</span> i <span class="keyword">in</span> range(12):
+    random_index = random.randint(0, n-1)
+    race.append(students[random_index])
+
+<span class="comment"># Display race results</span>
+print(<span class="string">"My Race: "</span>, end=<span class="string">""</span>)
+<span class="keyword">for</span> name <span class="keyword">in</span> race:
+    print(name, end=<span class="string">" "</span>)
+print()
+
+<span class="comment"># Count occurrences of each student</span>
+counts = [0] * n
+<span class="keyword">for</span> i <span class="keyword">in</span> range(n):
+    <span class="keyword">for</span> j <span class="keyword">in</span> range(12):
+        <span class="keyword">if</span> students[i] == race[j]:
+            counts[i] += 1
+    print(students[i] + <span class="string">" : "</span> + str(counts[i]))
+
+<span class="comment"># Find the student with maximum occurrences</span>
+max_count = 0
+winner = <span class="string">""</span>
+<span class="keyword">for</span> i <span class="keyword">in</span> range(n):
+    <span class="keyword">if</span> counts[i] > max_count:
+        max_count = counts[i]
+        winner = students[i]
+
+<span class="comment"># Display the winner</span>
+print(<span class="string">"Most Occurred Name: "</span> + winner + <span class="string">" (with "</span> + str(max_count) + <span class="string">" occurrences)"</span>)</pre>
+          </div>
+          
+          <div id="c-tab" class="code-tab">
+            <pre>
+<span class="keyword">#include</span> <span class="string">&lt;stdio.h></span>
+<span class="keyword">#include</span> <span class="string">&lt;stdlib.h></span>
+<span class="keyword">#include</span> <span class="string">&lt;time.h></span>
+
+<span class="type">int</span> <span class="function">main</span>() {
+    <span class="type">int</span> n;
+    <span class="function">printf</span>(<span class="string">"Enter total no. of students: "</span>);
+    <span class="function">scanf</span>(<span class="string">"%d"</span>, &n);
+    <span class="function">getchar</span>(); <span class="comment">// consume newline</span>
+    
+    <span class="type">char</span> students[n][50];
+    
+    <span class="function">printf</span>(<span class="string">"Enter students' names:\n"</span>);
+    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i < n; i++) {
+        <span class="function">fgets</span>(students[i], <span class="number">50</span>, stdin);
+        <span class="comment">// Remove newline character if present</span>
+        <span class="type">int</span> len = <span class="function">strlen</span>(students[i]);
+        <span class="keyword">if</span> (len > <span class="number">0</span> && students[i][len-<span class="number">1</span>] == <span class="string">'\n'</span>) {
+            students[i][len-<span class="number">1</span>] = <span class="string">'\0'</span>;
+        }
+    }
+    
+    <span class="comment">// Seed random number generator</span>
+    <span class="function">srand</span>(<span class="function">time</span>(<span class="number">0</span>));
+    
+    <span class="type">char</span> race[<span class="number">12</span>][50];
+    
+    <span class="comment">// Populate race array with random student names</span>
+    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i < <span class="number">12</span>; i++) {
+        <span class="type">int</span> randomIndex = <span class="function">rand</span>() % n;
+        <span class="function">strcpy</span>(race[i], students[randomIndex]);
+    }
+    
+    <span class="comment">// Display race results</span>
+    <span class="function">printf</span>(<span class="string">"My Race: "</span>);
+    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i < <span class="number">12</span>; i++) {
+        <span class="function">printf</span>(<span class="string">"%s "</span>, race[i]);
+    }
+    <span class="function">printf</span>(<span class="string">"\n"</span>);
+    
+    <span class="comment">// Count occurrences of each student</span>
+    <span class="type">int</span> counts[n];
+    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i < n; i++) {
+        counts[i] = <span class="number">0</span>;
+        <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j < <span class="number">12</span>; j++) {
+            <span class="keyword">if</span> (<span class="function">strcmp</span>(students[i], race[j]) == <span class="number">0</span>) {
+                counts[i]++;
+            }
+        }
+        <span class="function">printf</span>(<span class="string">"%s : %d\n"</span>, students[i], counts[i]);
+    }
+    
+    <span class="comment">// Find the student with maximum occurrences</span>
+    <span class="type">int</span> maxCount = <span class="number">0</span>;
+    <span class="type">char</span> winner[50];
+    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i < n; i++) {
+        <span class="keyword">if</span> (counts[i] > maxCount) {
+            maxCount = counts[i];
+            <span class="function">strcpy</span>(winner, students[i]);
+        }
+    }
+    
+    <span class="comment">// Display the winner</span>
+    <span class="function">printf</span>(<span class="string">"Most Occurred Name: %s (with %d occurrences)\n"</span>, winner, maxCount);
+    
+    <span class="keyword">return</span> <span class="number">0</span>;
+}</pre>
+          </div>
+          
+          <div id="cpp-tab" class="code-tab">
+            <pre>
+<span class="keyword">#include</span> <span class="string">&lt;iostream></span>
+<span class="keyword">#include</span> <span class="string">&lt;string></span>
+<span class="keyword">#include</span> <span class="string">&lt;cstdlib></span>
+<span class="keyword">#include</span> <span class="string">&lt;ctime></span>
+<span class="keyword">using</span> <span class="keyword">namespace</span> std;
+
+<span class="type">int</span> <span class="function">main</span>() {
+    <span class="type">int</span> n;
+    cout << <span class="string">"Enter total no. of students: "</span>;
+    cin >> n;
+    cin.ignore(); <span class="comment">// consume newline</span>
+    
+    string students[n];
+    
+    cout << <span class="string">"Enter students' names:"</span> << endl;
+    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i < n; i++) {
+        getline(cin, students[i]);
+    }
+    
+    <span class="comment">// Seed random number generator</span>
+    <span class="function">srand</span>(<span class="function">time</span>(<span class="number">0</span>));
+    
+    string race[<span class="number">12</span>];
+    
+    <span class="comment">// Populate race array with random student names</span>
+    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i < <span class="number">12</span>; i++) {
+        <span class="type">int</span> randomIndex = <span class="function">rand</span>() % n;
+        race[i] = students[randomIndex];
+    }
+    
+    <span class="comment">// Display race results</span>
+    cout << <span class="string">"My Race: "</span>;
+    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i < <span class="number">12</span>; i++) {
+        cout << race[i] << <span class="string">" "</span>;
+    }
+    cout << endl;
+    
+    <span class="comment">// Count occurrences of each student</span>
+    <span class="type">int</span> counts[n];
+    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i < n; i++) {
+        counts[i] = <span class="number">0</span>;
+        <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j < <span class="number">12</span>; j++) {
+            <span class="keyword">if</span> (students[i] == race[j]) {
+                counts[i]++;
+            }
+        }
+        cout << students[i] << <span class="string">" : "</span> << counts[i] << endl;
+    }
+    
+    <span class="comment">// Find the student with maximum occurrences</span>
+    <span class="type">int</span> maxCount = <span class="number">0</span>;
+    string winner;
+    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i < n; i++) {
+        <span class="keyword">if</span> (counts[i] > maxCount) {
+            maxCount = counts[i];
+            winner = students[i];
+        }
+    }
+    
+    <span class="comment">// Display the winner</span>
+    cout << <span class="string">"Most Occurred Name: "</span> << winner << <span class="string">" (with "</span> << maxCount << <span class="string">" occurrences)"</span> << endl;
+    
+    <span class="keyword">return</span> <span class="number">0</span>;
+}</pre>
+          </div>
+          
+          <div class="mt-4 text-center">
+            <button id="run-simulation-button" class="px-6 py-2 bg-yellow-500 text-black rounded-md hover:bg-yellow-600 transition-colors duration-300">
+              Run Simulation
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Modal open/close
+    const modal = document.getElementById('modal');
+    document.getElementById('knowMoreBtn').onclick = () => modal.classList.add('active');
+    document.getElementById('closeModal').onclick = () => {
+      modal.classList.remove('active');
+      document.getElementById('code-section').classList.add('hidden');
+      document.getElementById('simulation-section').classList.add('hidden');
+      document.getElementById('input-section').classList.remove('hidden');
+      
+      // Reset tab to Java
+      document.querySelectorAll('.code-tab').forEach(tab => tab.classList.remove('active'));
+      document.getElementById('java-tab').classList.add('active');
+      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      document.querySelector('[data-tab="java"]').classList.add('active');
+    };
+
+    // Code tab switching
+    document.querySelectorAll('.tab-button').forEach(button => {
+      button.addEventListener('click', () => {
+        const tabId = button.getAttribute('data-tab');
+        
+        // Update active tab button
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        
+        // Show selected tab content
+        document.querySelectorAll('.code-tab').forEach(tab => tab.classList.remove('active'));
+        document.getElementById(`${tabId}-tab`).classList.add('active');
+      });
+    });
+
+    // Toggle code view
+    document.getElementById('view-code-button').addEventListener('click', () => {
+      document.getElementById('code-section').classList.remove('hidden');
+      document.getElementById('simulation-section').classList.add('hidden');
+      
+      // Scroll to code section
+      document.getElementById('code-section').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Run simulation from code view
+    document.getElementById('run-simulation-button').addEventListener('click', () => {
+      document.getElementById('code-section').classList.add('hidden');
+      document.getElementById('simulation-section').classList.remove('hidden');
+      document.getElementById('input-section').classList.remove('hidden');
+      
+      // Scroll to input section
+      document.getElementById('input-section').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Simulation logic
+    document.getElementById('run-button').addEventListener('click', runSimulation);
+
+    async function runSimulation() {
+      const numStudentsInput = document.getElementById('num-students').value;
+      const studentNamesInput = document.getElementById('student-names').value;
+      
+      if (numStudentsInput <= 0 || !studentNamesInput.trim()) {
+          alert("Please enter a positive number of students and their names.");
+          return;
+      }
+
+      document.getElementById('input-section').classList.add('hidden');
+      document.getElementById('simulation-section').classList.remove('hidden');
+      document.getElementById('code-section').classList.add('hidden');
+      
+      // Scroll to simulation section
+      document.getElementById('simulation-section').scrollIntoView({ behavior: 'smooth' });
+
+      const students = studentNamesInput.split(',').map(name => name.trim());
+      const race = [];
+      const raceSize = 12;
+
+      const studentsListDiv = document.getElementById('students-list');
+      const raceListDiv = document.getElementById('race-list');
+      const occurrenceListDiv = document.getElementById('occurrence-list');
+      const winnerSectionDiv = document.getElementById('winner-section');
+
+      studentsListDiv.innerHTML = '';
+      raceListDiv.innerHTML = '';
+      occurrenceListDiv.innerHTML = '';
+      winnerSectionDiv.classList.add('hidden');
+
+      // Step 1: Show students
+      students.forEach(name => {
+        const studentDiv = document.createElement('div');
+        studentDiv.textContent = name;
+        studentDiv.className = 'p-2 bg-indigo-600 rounded-md';
+        studentsListDiv.appendChild(studentDiv);
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Step 2: Race
+      for (let i = 0; i < raceSize; i++) {
+        const randomIndex = Math.floor(Math.random() * students.length);
+        const randomStudent = students[randomIndex];
+        race.push(randomStudent);
+
+        const studentDivs = studentsListDiv.children;
+        if (studentDivs[randomIndex]) {
+          studentDivs[randomIndex].classList.add('animate-pulse-once', 'bg-indigo-400');
+          await new Promise(resolve => setTimeout(resolve, 500));
+          studentDivs[randomIndex].classList.remove('animate-pulse-once', 'bg-indigo-400');
+        }
+
+        const raceItem = document.createElement('span');
+        raceItem.textContent = randomStudent;
+        raceItem.className = 'p-2 bg-yellow-500 rounded-md';
+        raceListDiv.appendChild(raceItem);
+        
+        // Auto-scroll to the latest race item
+        raceItem.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Step 3: Count occurrences
+      const counts = new Array(students.length).fill(0);
+      const raceItems = raceListDiv.children;
+
+      for (let i = 0; i < students.length; i++) {
+        const studentName = students[i];
+        const studentDiv = document.createElement('div');
+        studentDiv.id = `student-${i}`;
+        studentDiv.className = 'flex items-center gap-4 text-xl font-medium';
+        studentDiv.innerHTML = `<span>${studentName}</span><span id="count-${i}" class="text-yellow-400 font-bold">0</span>`;
+        occurrenceListDiv.appendChild(studentDiv);
+
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        const currentStudentDiv = document.getElementById(`student-${i}`).querySelector('span');
+        currentStudentDiv.classList.add('animate-pulse-once', 'bg-green-600', 'p-2', 'rounded-md');
+
+        for (let j = 0; j < race.length; j++) {
+          if (studentName === race[j]) {
+            raceItems[j].classList.add('bg-yellow-300', 'animate-pulse-once');
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            counts[i]++;
+            document.getElementById(`count-${i}`).textContent = counts[i];
+
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            raceItems[j].classList.remove('bg-yellow-300', 'animate-pulse-once');
+          }
+        }
+        currentStudentDiv.classList.remove('bg-green-600', 'animate-pulse-once');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Auto-scroll to the current occurrence being updated
+        document.getElementById(`student-${i}`).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Step 4: Find winner
+      let maxCount = -1, winnerIndex = -1;
+      for (let i = 0; i < counts.length; i++) {
+        if (counts[i] > maxCount) {
+          maxCount = counts[i];
+          winnerIndex = i;
+        }
+      }
+      if (winnerIndex !== -1) {
+        const winnerName = students[winnerIndex];
+        const winnerCount = counts[winnerIndex];
+
+        winnerSectionDiv.classList.remove('hidden');
+        document.getElementById('winner-name').textContent = winnerName;
+        document.getElementById('winner-count').textContent = winnerCount;
+
+        const winnerDiv = document.getElementById(`student-${winnerIndex}`);
+        if (winnerDiv) {
+          winnerDiv.classList.add('bg-green-500', 'p-2', 'rounded-md', 'animate-pulse-once');
+        }
+        
+        // Auto-scroll to winner section
+        winnerSectionDiv.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  </script>
+</body>
+</html>
