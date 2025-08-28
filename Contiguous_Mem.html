@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bus Seat Booking & Fragmentation Visualizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Floating bubble animation for a dynamic background */
+        @keyframes float {
+            0% { transform: translateY(0) scale(1); opacity: 0.8; }
+            50% { transform: translateY(-40px) scale(1.1); opacity: 1; }
+            100% { transform: translateY(0) scale(1); opacity: 0.8; }
+        }
+        .bubble { animation: float 6s ease-in-out infinite; }
+        .bubble:nth-child(2) { animation-delay: 2s; }
+        .bubble:nth-child(3) { animation-delay: 4s; }
+
+        /* Popup modal styling */
+        .modal { display: none; }
+        .modal.active { display: flex; }
+
+        /* Seat visualization animations */
+        @keyframes highlight {
+            0% { transform: scale(1); background-color: #fcd34d; }
+            50% { transform: scale(1.05); background-color: #fcd34d; }
+            100% { transform: scale(1); background-color: #fbbf24; }
+        }
+        @keyframes book {
+            0% { background-color: transparent; }
+            100% { background-color: #ef4444; } /* Red for confirmed booking */
+        }
+        @keyframes empty {
+            0% { background-color: #ef4444; } /* Red */
+            100% { background-color: #6b7280; } /* Gray for empty */
+        }
+        @keyframes fragmentation-error {
+            0% { background-color: transparent; }
+            100% { background-color: #3b82f6; } /* Blue for fragmentation error */
+        }
+
+        .animate-highlight { animation: highlight 0.5s ease-in-out; }
+        .animate-book { animation: book 0.5s ease-in-out forwards; }
+        .animate-empty { animation: empty 0.5s ease-in-out forwards; }
+        .animate-fragmentation-error { animation: fragmentation-error 0.5s ease-in-out forwards; }
+        
+        /* Code tabs styling */
+        .code-tab { 
+            display: none;
+            background-color: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+            max-height: 300px;
+        }
+        .code-tab.active { display: block; }
+        .tab-button {
+            background-color: #374151;
+            color: #d1d5db;
+            padding: 0.5rem 1rem;
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+            cursor: pointer;
+        }
+        .tab-button.active {
+            background-color: #1e293b;
+            color: white;
+        }
+        pre {
+            margin: 0;
+            color: #e5e7eb;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .keyword { color: #ff79c6; }
+        .type { color: #8be9fd; }
+        .function { color: #50fa7b; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; }
+        .number { color: #bd93f9; }
+
+        /* Bus seat grid styling */
+        #bus-seats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 seats per row */
+            gap: 5px;
+            margin-top: 1rem;
+            border: 1px solid #4a5568;
+            padding: 10px;
+            background-color: #2d3748;
+            border-radius: 0.5rem;
+        }
+        .seat {
+            width: 50px; /* Fixed width */
+            height: 50px; /* Fixed height */
+            background-color: #6b7280; /* Default empty seat color */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: white;
+            border: 1px solid #4a5568;
+            transition: background-color 0.3s ease;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .seat.empty { background-color: #34d399; /* Green for empty */ }
+        .seat.reserved { background-color: #fcd34d; /* Yellow for reserved */ }
+        .seat.booked { background-color: #ef4444; /* Red for booked */ }
+    </style>
+</head>
+<body class="relative min-h-screen flex items-center justify-center bg-black overflow-hidden font-sans">
+
+    <div class="absolute top-0 left-0 w-full h-full">
+        <svg class="absolute top-10 left-20 w-64 h-64 bubble blur-3xl opacity-40" fill="#3b82f6">
+            <circle cx="50%" cy="50%" r="150" />
+        </svg>
+        <svg class="absolute bottom-20 right-10 w-72 h-72 bubble blur-3xl opacity-30" fill="#1d4ed8">
+            <circle cx="50%" cy="50%" r="160" />
+        </svg>
+        <svg class="absolute top-1/2 left-1/3 w-80 h-80 bubble blur-3xl opacity-20" fill="#60a5fa">
+            <circle cx="50%" cy="50%" r="170" />
+        </svg>
+    </div>
+
+    <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/80 backdrop-blur-sm"></div>
+
+    <div class="relative text-center px-6">
+        <h1 class="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-teal-600 drop-shadow-lg">
+            Bus Seat Booking & Fragmentation Visualizer
+        </h1>
+        <p class="mt-6 text-lg md:text-xl text-gray-200 max-w-2xl mx-auto">
+            See how booking contiguous seats can lead to a fragmented bus layout.
+        </p>
+
+        <button id="knowMoreBtn" class="mt-8 px-8 py-3 rounded-2xl font-semibold text-black bg-white/40 backdrop-blur-md transition-all duration-300 
+                                         hover:bg-gradient-to-r hover:from-teal-500 hover:to-black hover:text-white shadow-lg">
+            Understand the Problem
+        </button>
+    </div>
+
+    <div id="modal" class="modal fixed inset-0 bg-black/80 backdrop-blur-sm z-50 items-center justify-center p-4">
+        <div class="relative max-w-5xl w-full bg-white/10 rounded-2xl shadow-2xl p-8 text-white overflow-y-auto max-h-[90vh]">
+
+            <button id="closeModal" class="absolute top-4 right-4 text-white bg-red-500 px-3 py-1 rounded-lg hover:bg-red-600">
+                ✕
+            </button>
+
+            <h2 class="text-3xl font-bold text-teal-400 mb-4">Problem Statement: Bus Seat Fragmentation</h2>
+            <p class="mb-4 text-lg">
+                Imagine you are building a bus booking system. A core challenge is to find a block of **N contiguous empty seats** for a group booking. As seats are booked and released, the bus layout can become "fragmented" with scattered empty seats, making it impossible to find a large enough block, even if the total number of empty seats is sufficient. This is known as **external fragmentation**.
+            </p>
+            
+            <ol class="list-decimal pl-6 mb-6 text-lg space-y-2">
+                <li><span class="font-semibold">Initial State:</span> The bus is represented as a linear array of seats, arranged row by row. Each seat has one of three states: Empty (🟢), Reserved (🟡), or Confirmed (🔴).</li>
+                <li><span class="font-semibold">Group Booking:</span> A user requests to book a specific number of seats ($N$) together. The system must find the **first** available block of $N$ contiguous empty seats.</li>
+                <li><span class="font-semibold">The Fragmentation Challenge:</span> After many bookings and cancellations (simulated by releasing seats), the bus may have enough total empty seats, but no large enough contiguous block to satisfy a new group booking. The system must detect this and notify the user.</li>
+            </ol>
+            
+            <div class="bg-gray-800 p-4 rounded-lg mb-6">
+                <h3 class="text-xl font-bold text-green-400 mb-2">Seat States:</h3>
+                <ul class="list-disc pl-6 space-y-1">
+                    <li><span class="text-green-400 font-bold">Empty (🟢):</span> Available for booking.</li>
+                    <li><span class="text-yellow-400 font-bold">Reserved (🟡):</span> Temporarily held for a pending booking. This state is not directly used in this simple visualizer but is a key concept in a real system. We will simply move from empty to booked.</li>
+                    <li><span class="text-red-400 font-bold">Confirmed (🔴):</span> Successfully booked and permanently unavailable.</li>
+                </ul>
+            </div>
+
+            <div class="bg-gray-800 p-4 rounded-lg mb-6">
+                <h3 class="text-xl font-bold text-green-400 mb-2">Sample Test Cases:</h3>
+                <p class="mb-1"><span class="font-semibold">Test Case 1: Successful Booking</span></p>
+                <p class="ml-4">Initial State: [🟢, 🟢, 🟢, 🔴, 🔴, 🟢, 🟢, 🟢, 🟢, 🔴, 🟢, 🟢]</p>
+                <p class="ml-4">Request: Book 3 seats.</p>
+                <p class="ml-4">Expected Output: The first three seats are booked. New state: [🔴, 🔴, 🔴, 🔴, 🔴, 🟢, 🟢, 🟢, 🟢, 🔴, 🟢, 🟢]</p>
+                <p class="mt-4 mb-1"><span class="font-semibold">Test Case 2: Fragmentation Error</span></p>
+                <p class="ml-4">Initial State: [🟢, 🔴, 🟢, 🔴, 🟢, 🔴, 🟢, 🔴, 🟢, 🟢, 🔴, 🟢]</p>
+                <p class="ml-4">Request: Book 3 seats.</p>
+                <p class="ml-4">Expected Output: "Fragmentation Error". The total empty seats are 5, but no 3 are contiguous.</p>
+            </div>
+
+            <div class="bg-gray-900/70 p-6 rounded-xl shadow-lg">
+                <div id="input-section" class="mb-8">
+                    <h3 class="text-xl font-bold text-teal-400 mb-4">Bus Booking Operations</h3>
+                    <div class="mb-4">
+                        <label for="booking-size" class="block text-gray-300 font-semibold mb-2">Number of Seats to Book:</label>
+                        <input type="number" id="booking-size" value="3" min="1"
+                            class="w-full p-2 border border-gray-300 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div class="flex gap-4 mb-4">
+                        <button id="book-button" class="flex-1 bg-green-500 text-black py-2 rounded-md hover:bg-green-600 transition-colors duration-300">
+                            Book Seats
+                        </button>
+                    </div>
+                    <button id="reset-button" class="w-full bg-gray-500 text-white py-2 rounded-md hover:bg-gray-600 transition-colors duration-300">
+                        Reset Bus
+                    </button>
+                </div>
+
+                <div id="simulation-section">
+                    <h2 class="text-2xl font-bold text-teal-400 mb-4">Bus Layout (4 seats per row)</h2>
+                    <div id="bus-seats"></div>
+                    <div id="status-message" class="mt-4 text-lg font-semibold text-yellow-400">Bus is empty. Ready for bookings.</div>
+
+                    <div class="mt-8 text-center">
+                        <button id="view-code-button" class="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors duration-300">
+                            View Solution Code
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="code-section" class="hidden mt-8">
+                    <h2 class="text-2xl font-bold text-teal-400 mb-4">Solution Code</h2>
+                    
+                    <div class="flex mb-2">
+                        <button class="tab-button active" data-tab="java">Java</button>
+                        <button class="tab-button" data-tab="python">Python</button>
+                        <button class="tab-button" data-tab="c">C</button>
+                        <button class="tab-button" data-tab="cpp">C++</button>
+                    </div>
+                    
+                    <div id="java-tab" class="code-tab active">
+                        <pre>
+<span class="keyword">import</span> java.util.Scanner;
+<span class="keyword">import</span> java.util.Arrays;
+
+<span class="keyword">public</span> <span class="keyword">class</span> <span class="type">BusBookingFragmentation</span> {
+    <span class="type">static</span> <span class="type">int</span> SEATS_PER_ROW = <span class="number">4</span>;
+    <span class="type">static</span> <span class="type">int</span> TOTAL_SEATS = <span class="number">12</span>;
+    <span class="type">static</span> <span class="type">int</span>[] busSeats = <span class="keyword">new</span> <span class="type">int</span>[TOTAL_SEATS]; <span class="comment">// 0: Empty, 1: Reserved, 2: Booked</span>
+
+    <span class="keyword">public</span> <span class="type">static</span> <span class="type">void</span> <span class="function">initializeBus</span>() {
+        Arrays.fill(busSeats, <span class="number">0</span>);
+    }
+
+    <span class="keyword">public</span> <span class="type">static</span> <span class="type">boolean</span> <span class="function">bookSeats</span>(<span class="type">int</span> numSeats) {
+        <span class="type">int</span> emptyCount = <span class="number">0</span>;
+        <span class="type">int</span> startIndex = -<span class="number">1</span>;
+
+        <span class="comment">// Iterate through the seats to find a contiguous block</span>
+        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i < TOTAL_SEATS; i++) {
+            <span class="keyword">if</span> (busSeats[i] == <span class="number">0</span>) {
+                <span class="keyword">if</span> (emptyCount == <span class="number">0</span>) {
+                    startIndex = i;
+                }
+                emptyCount++;
+                <span class="keyword">if</span> (emptyCount == numSeats) {
+                    <span class="comment">// Found a block, book the seats</span>
+                    <span class="keyword">for</span> (<span class="type">int</span> j = startIndex; j < startIndex + numSeats; j++) {
+                        busSeats[j] = <span class="number">2</span>; <span class="comment">// Mark as booked (2)</span>
+                    }
+                    <span class="keyword">return</span> <span class="keyword">true</span>;
+                }
+            } <span class="keyword">else</span> {
+                emptyCount = <span class="number">0</span>; <span class="comment">// Reset counter if a non-empty seat is found</span>
+            }
+        }
+        <span class="keyword">return</span> <span class="keyword">false</span>; <span class="comment">// No contiguous block of sufficient size found</span>
+    }
+
+    <span class="keyword">public</span> <span class="type">static</span> <span class="type">void</span> <span class="function">printBusLayout</span>() {
+        System.out.println(<span class="string">"\nCurrent Bus Layout (0:Empty, 2:Booked):"</span>);
+        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i < TOTAL_SEATS; i++) {
+            System.out.print(busSeats[i] + <span class="string">" "</span>);
+            <span class="keyword">if</span> ((i + <span class="number">1</span>) % SEATS_PER_ROW == <span class="number">0</span>) {
+                System.out.println();
+            }
+        }
+        System.out.println();
+    }
+
+    <span class="keyword">public</span> <span class="type">static</span> <span class="type">void</span> <span class="function">main</span>(<span class="type">String</span>[] args) {
+        Scanner scanner = <span class="keyword">new</span> Scanner(System.in);
+        initializeBus();
+        printBusLayout();
+
+        <span class="keyword">while</span> (<span class="keyword">true</span>) {
+            System.out.print(<span class="string">"Enter number of seats to book (0 to exit): "</span>);
+            <span class="type">int</span> numSeats = scanner.nextInt();
+            <span class="keyword">if</span> (numSeats == <span class="number">0</span>) {
+                System.out.println(<span class="string">"Exiting."</span>);
+                <span class="keyword">break</span>;
+            }
+            <span class="keyword">if</span> (bookSeats(numSeats)) {
+                System.out.println(<span class="string">"Successfully booked "</span> + numSeats + <span class="string">" seats."</span>);
+            } <span class="keyword">else</span> {
+                System.out.println(<span class="string">"Fragmentation Error: Cannot find "</span> + numSeats + <span class="string">" contiguous seats."</span>);
+            }
+            printBusLayout();
+        }
+        scanner.close();
+    }
+}
+</pre>
+                    </div>
+                    
+                    <div id="python-tab" class="code-tab">
+                        <pre>
+<span class="keyword">SEATS_PER_ROW</span> = 4
+<span class="keyword">TOTAL_SEATS</span> = 12
+bus_seats = [0] * TOTAL_SEATS  <span class="comment"># 0: Empty, 1: Reserved, 2: Booked</span>
+
+<span class="function">def initialize_bus</span>():
+    <span class="keyword">global</span> bus_seats
+    bus_seats = [0] * TOTAL_SEATS
+
+<span class="function">def book_seats</span>(num_seats):
+    empty_count = 0
+    start_index = -1
+
+    <span class="comment"># Iterate through the seats to find a contiguous block</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> range(TOTAL_SEATS):
+        <span class="keyword">if</span> bus_seats[i] == 0:
+            <span class="keyword">if</span> empty_count == 0:
+                start_index = i
+            empty_count += 1
+            <span class="keyword">if</span> empty_count == num_seats:
+                <span class="comment"># Found a block, book the seats</span>
+                <span class="keyword">for</span> j <span class="keyword">in</span> range(start_index, start_index + num_seats):
+                    bus_seats[j] = 2  <span class="comment"># Mark as booked (2)</span>
+                <span class="keyword">return</span> <span class="keyword">True</span>
+        <span class="keyword">else</span>:
+            empty_count = 0  <span class="comment"># Reset counter if a non-empty seat is found</span>
+    <span class="keyword">return</span> <span class="keyword">False</span>  <span class="comment"># No contiguous block of sufficient size found</span>
+
+<span class="function">def print_bus_layout</span>():
+    print(<span class="string">"\nCurrent Bus Layout (0:Empty, 2:Booked):"</span>)
+    <span class="keyword">for</span> i <span class="keyword">in</span> range(TOTAL_SEATS):
+        print(bus_seats[i], end=<span class="string">" "</span>)
+        <span class="keyword">if</span> (i + 1) % SEATS_PER_ROW == 0:
+            print()
+    print()
+
+<span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:
+    initialize_bus()
+    print_bus_layout()
+
+    <span class="keyword">while</span> <span class="keyword">True</span>:
+        try:
+            num_seats = int(input(<span class="string">"Enter number of seats to book (0 to exit): "</span>))
+            <span class="keyword">if</span> num_seats == 0:
+                print(<span class="string">"Exiting."</span>)
+                <span class="keyword">break</span>
+            <span class="keyword">if</span> book_seats(num_seats):
+                print(<span class="string">f"Successfully booked {num_seats} seats."</span>)
+            <span class="keyword">else</span>:
+                print(<span class="string">f"Fragmentation Error: Cannot find {num_seats} contiguous seats."</span>)
+            print_bus_layout()
+        except ValueError:
+            print(<span class="string">"Invalid input. Please enter a number."</span>)
+</pre>
+                    </div>
+                    
+                    <div id="c-tab" class="code-tab">
+                        <pre>
+<span class="keyword">#include</span> <span class="string">&lt;stdio.h></span>
+<span class="keyword">#include</span> <span class="string">&lt;stdlib.h></span>
+
+<span class="keyword">#define</span> SEATS_PER_ROW 4
+<span class="keyword">#define</span> TOTAL_SEATS 12
+<span class="type">int</span> busSeats[TOTAL_SEATS]; <span class="comment">// 0: Empty, 1: Reserved, 2: Booked</span>
+
+<span class="type">void</span> <span class="function">initializeBus</span>() {
+    <span class="keyword">for</span> (<span class="type">int</span> i = 0; i < TOTAL_SEATS; i++) {
+        busSeats[i] = 0;
+    }
+}
+
+<span class="type">int</span> <span class="function">bookSeats</span>(<span class="type">int</span> numSeats) {
+    <span class="type">int</span> emptyCount = 0;
+    <span class="type">int</span> startIndex = -1;
+
+    <span class="comment">// Iterate through the seats to find a contiguous block</span>
+    <span class="keyword">for</span> (<span class="type">int</span> i = 0; i < TOTAL_SEATS; i++) {
+        <span class="keyword">if</span> (busSeats[i] == 0) {
+            <span class="keyword">if</span> (emptyCount == 0) {
+                startIndex = i;
+            }
+            emptyCount++;
+            <span class="keyword">if</span> (emptyCount == numSeats) {
+                <span class="comment">// Found a block, book the seats</span>
+                <span class="keyword">for</span> (<span class="type">int</span> j = startIndex; j < startIndex + numSeats; j++) {
+                    busSeats[j] = 2; <span class="comment">// Mark as booked (2)</span>
+                }
+                <span class="keyword">return</span> 1;
+            }
+        } <span class="keyword">else</span> {
+            emptyCount = 0; <span class="comment">// Reset counter if a non-empty seat is found</span>
+        }
+    }
+    <span class="keyword">return</span> 0; <span class="comment">// No contiguous block of sufficient size found</span>
+}
+
+<span class="type">void</span> <span class="function">printBusLayout</span>() {
+    printf(<span class="string">"\nCurrent Bus Layout (0:Empty, 2:Booked):\n"</span>);
+    <span class="keyword">for</span> (<span class="type">int</span> i = 0; i < TOTAL_SEATS; i++) {
+        printf(<span class="string">"%d "</span>, busSeats[i]);
+        <span class="keyword">if</span> ((i + 1) % SEATS_PER_ROW == 0) {
+            printf(<span class="string">"\n"</span>);
+        }
+    }
+    printf(<span class="string">"\n"</span>);
+}
+
+<span class="type">int</span> <span class="function">main</span>() {
+    <span class="type">int</span> numSeats, choice;
+    initializeBus();
+    printBusLayout();
+
+    <span class="keyword">while</span> (1) {
+        printf(<span class="string">"Enter number of seats to book (0 to exit): "</span>);
+        scanf(<span class="string">"%d"</span>, &numSeats);
+        <span class="keyword">if</span> (numSeats == 0) {
+            printf(<span class="string">"Exiting.\n"</span>);
+            <span class="keyword">break</span>;
+        }
+        <span class="keyword">if</span> (bookSeats(numSeats)) {
+            printf(<span class="string">"Successfully booked %d seats.\n"</span>, numSeats);
+        } <span class="keyword">else</span> {
+            printf(<span class="string">"Fragmentation Error: Cannot find %d contiguous seats.\n"</span>, numSeats);
+        }
+        printBusLayout();
+    }
+    <span class="keyword">return</span> 0;
+}
+</pre>
+                    </div>
+
+                    <div id="cpp-tab" class="code-tab">
+                        <pre>
+<span class="keyword">#include</span> <span class="string">&lt;iostream></span>
+<span class="keyword">#include</span> <span class="string">&lt;vector></span>
+<span class="keyword">#include</span> <span class="string">&lt;numeric></span>
+
+<span class="keyword">const</span> <span class="type">int</span> SEATS_PER_ROW = <span class="number">4</span>;
+<span class="keyword">const</span> <span class="type">int</span> TOTAL_SEATS = <span class="number">12</span>;
+<span class="type">std</span>::<span class="type">vector</span>&lt;<span class="type">int</span>> busSeats(TOTAL_SEATS, <span class="number">0</span>); <span class="comment">// 0: Empty, 1: Reserved, 2: Booked</span>
+
+<span class="type">void</span> <span class="function">initializeBus</span>() {
+    <span class="type">std</span>::<span class="type">fill</span>(busSeats.begin(), busSeats.end(), <span class="number">0</span>);
+}
+
+<span class="type">bool</span> <span class="function">bookSeats</span>(<span class="type">int</span> numSeats) {
+    <span class="type">int</span> emptyCount = <span class="number">0</span>;
+    <span class="type">int</span> startIndex = -<span class="number">1</span>;
+
+    <span class="comment">// Iterate through the seats to find a contiguous block</span>
+    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i < TOTAL_SEATS; ++i) {
+        <span class="keyword">if</span> (busSeats[i] == <span class="number">0</span>) {
+            <span class="keyword">if</span> (emptyCount == <span class="number">0</span>) {
+                startIndex = i;
+            }
+            emptyCount++;
+            <span class="keyword">if</span> (emptyCount == numSeats) {
+                <span class="comment">// Found a block, book the seats</span>
+                <span class="keyword">for</span> (<span class="type">int</span> j = startIndex; j < startIndex + numSeats; ++j) {
+                    busSeats[j] = <span class="number">2</span>; <span class="comment">// Mark as booked (2)</span>
+                }
+                <span class="keyword">return</span> <span class="keyword">true</span>;
+            }
+        } <span class="keyword">else</span> {
+            emptyCount = <span class="number">0</span>; <span class="comment">// Reset counter if a non-empty seat is found</span>
+        }
+    }
+    <span class="keyword">return</span> <span class="keyword">false</span>; <span class="comment">// No contiguous block of sufficient size found</span>
+}
+
+<span class="type">void</span> <span class="function">printBusLayout</span>() {
+    <span class="type">std</span>::<span class="type">cout</span> << <span class="string">"\nCurrent Bus Layout (0:Empty, 2:Booked):\n"</span>;
+    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i < TOTAL_SEATS; ++i) {
+        <span class="type">std</span>::<span class="type">cout</span> << busSeats[i] << <span class="string">" "</span>;
+        <span class="keyword">if</span> ((i + <span class="number">1</span>) % SEATS_PER_ROW == <span class="number">0</span>) {
+            <span class="type">std</span>::<span class="type">cout</span> << <span class="string">"\n"</span>;
+        }
+    }
+    <span class="type">std</span>::<span class="type">cout</span> << <span class="string">"\n"</span>;
+}
+
+<span class="type">int</span> <span class="function">main</span>() {
+    <span class="type">int</span> numSeats;
+    initializeBus();
+    printBusLayout();
+
+    <span class="keyword">while</span> (<span class="keyword">true</span>) {
+        <span class="type">std</span>::<span class="type">cout</span> << <span class="string">"Enter number of seats to book (0 to exit): "</span>;
+        <span class="type">std</span>::<span class="type">cin</span> >> numSeats;
+        <span class="keyword">if</span> (numSeats == <span class="number">0</span>) {
+            <span class="type">std</span>::<span class="type">cout</span> << <span class="string">"Exiting.\n"</span>;
+            <span class="keyword">break</span>;
+        }
+        <span class="keyword">if</span> (<span class="function">bookSeats</span>(numSeats)) {
+            <span class="type">std</span>::<span class="type">cout</span> << <span class="string">"Successfully booked "</span> << numSeats << <span class="string">" seats.\n"</span>;
+        } <span class="keyword">else</span> {
+            <span class="type">std</span>::<span class="type">cout</span> << <span class="string">"Fragmentation Error: Cannot find "</span> << numSeats << <span class="string">" contiguous seats.\n"</span>;
+        }
+        printBusLayout();
+    }
+    <span class="keyword">return</span> <span class="number">0</span>;
+}
+</pre>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+    const TOTAL_SEATS = 12;
+    const SEATS_PER_ROW = 4;
+    let busSeats = [];
+
+    // Map of seat statuses to Tailwind CSS colors
+    const seatStatusMap = {
+        0: 'bg-green-500', // Empty
+        1: 'bg-yellow-500', // Reserved (not used in this simple visualizer but kept for clarity)
+        2: 'bg-red-500' // Confirmed/Booked
+    };
+
+    const busSeatsContainer = document.getElementById('bus-seats');
+    const bookingSizeInput = document.getElementById('booking-size');
+    const bookButton = document.getElementById('book-button');
+    const resetButton = document.getElementById('reset-button');
+    const statusMessage = document.getElementById('status-message');
+
+    // Modal and code section elements
+    const knowMoreBtn = document.getElementById('knowMoreBtn');
+    const modal = document.getElementById('modal');
+    const closeModalBtn = document.getElementById('closeModal');
+    const viewCodeBtn = document.getElementById('view-code-button');
+    const codeSection = document.getElementById('code-section');
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const codeTabs = document.querySelectorAll('.code-tab');
+
+    /**
+     * Initializes the bus layout by creating the seat elements and setting their state to Empty.
+     */
+    function initializeBus() {
+        busSeats = Array(TOTAL_SEATS).fill(0);
+        busSeatsContainer.innerHTML = '';
+        for (let i = 0; i < TOTAL_SEATS; i++) {
+            const seat = document.createElement('div');
+            seat.className = `seat ${seatStatusMap[busSeats[i]]} rounded-md shadow-md hover:scale-105 transition-transform`;
+            seat.textContent = i + 1; // Display seat number
+            seat.dataset.index = i;
+            busSeatsContainer.appendChild(seat);
+        }
+        updateStatusMessage('Bus is empty. Ready for bookings.');
+    }
+
+    /**
+     * Updates the visual representation of the bus seats based on the internal state array.
+     */
+    function updateBusLayout() {
+        const seatElements = busSeatsContainer.children;
+        for (let i = 0; i < TOTAL_SEATS; i++) {
+            const seat = seatElements[i];
+            // Remove all existing status classes before adding the new one
+            seat.classList.remove('bg-green-500', 'bg-yellow-500', 'bg-red-500');
+            seat.classList.add(seatStatusMap[busSeats[i]]);
+        }
+    }
+
+    /**
+     * Books a contiguous block of seats using the First-Fit algorithm.
+     * @param {number} numSeats The number of seats to book.
+     * @returns {boolean} True if a booking was successful, false otherwise.
+     */
+    function bookSeats(numSeats) {
+        let emptyCount = 0;
+        let startIndex = -1;
+
+        // Iterate to find the first contiguous block of empty seats
+        for (let i = 0; i < TOTAL_SEATS; i++) {
+            if (busSeats[i] === 0) {
+                if (emptyCount === 0) {
+                    startIndex = i;
+                }
+                emptyCount++;
+                if (emptyCount === numSeats) {
+                    // Found a fit, now book the seats
+                    for (let j = startIndex; j < startIndex + numSeats; j++) {
+                        busSeats[j] = 2; // Mark as booked (2)
+                    }
+                    return true;
+                }
+            } else {
+                emptyCount = 0; // Reset counter if a non-empty seat is encountered
+            }
+        }
+        return false; // No contiguous block of sufficient size found
+    }
+
+    /**
+     * Displays a message in the status area.
+     * @param {string} message The message to display.
+     * @param {string} color The Tailwind CSS color class for the message.
+     */
+    function updateStatusMessage(message, color = 'text-yellow-400') {
+        statusMessage.textContent = message;
+        statusMessage.className = `mt-4 text-lg font-semibold ${color}`;
+    }
+
+    // --- Event Listeners ---
+
+    bookButton.addEventListener('click', () => {
+        const numSeats = parseInt(bookingSizeInput.value, 10);
+        if (isNaN(numSeats) || numSeats <= 0) {
+            updateStatusMessage('Please enter a valid number of seats.', 'text-red-400');
+            return;
+        }
+
+        if (bookSeats(numSeats)) {
+            updateBusLayout();
+            updateStatusMessage(`Successfully booked ${numSeats} seats!`, 'text-green-400');
+        } else {
+            updateStatusMessage(`Fragmentation Error: Cannot find ${numSeats} contiguous seats.`, 'text-red-400');
+        }
+    });
+
+    resetButton.addEventListener('click', () => {
+        initializeBus();
+    });
+
+    knowMoreBtn.addEventListener('click', () => {
+        modal.classList.add('active');
+    });
+
+    closeModalBtn.addEventListener('click', () => {
+        modal.classList.remove('active');
+    });
+
+    viewCodeBtn.addEventListener('click', () => {
+        codeSection.classList.toggle('hidden');
+        if (codeSection.classList.contains('hidden')) {
+            viewCodeBtn.textContent = 'View Solution Code';
+        } else {
+            viewCodeBtn.textContent = 'Hide Code';
+        }
+    });
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const tabId = button.dataset.tab;
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            codeTabs.forEach(tab => tab.classList.remove('active'));
+            
+            button.classList.add('active');
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+        });
+    });
+
+    // Initialize the bus layout when the page loads
+    window.onload = initializeBus;
+</script>
+</body>
+</html>
