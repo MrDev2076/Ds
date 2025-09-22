@@ -5,166 +5,522 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Stack Visualizer</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .bg-gradient-main {
+      background-image: linear-gradient(to bottom right, #f3e8ff, #fde4d8);
+    }
+    .stack-container {
+      border: 4px solid #a855f7;
+      background-color: #f9fafb;
+      min-height: 400px;
+      width: 250px;
+      position: relative;
+      padding: 1rem;
+      box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 10px -2px rgba(0, 0, 0, 0.05);
+      border-radius: 1.5rem;
+    }
+    .stack-container::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 20px;
+      background-color: #7c3aed;
+      border-bottom-left-radius: 1.25rem;
+      border-bottom-right-radius: 1.25rem;
+      z-index: 10;
+    }
+    .stack-element {
+      background-color: #a855f7;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      width: calc(100% - 1rem);
+      text-align: center;
+      transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      transform: translateY(0);
+      opacity: 1;
+      position: relative;
+      z-index: 20;
+    }
+    .stack-element.popping {
+      transform: translateY(-200px) scale(0.5);
+      opacity: 0;
+    }
+    .stack-element.peeking {
+      animation: pulse 1.5s infinite ease-in-out;
+      border: 2px solid #ec4899;
+    }
+    .lang-tab {
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+      font-size: 1.125rem;
+      border-radius: 0.75rem 0.75rem 0 0;
+      transition: all 0.3s ease-in-out;
+      background-color: #f1f5f9;
+      color: #64748b;
+      border-bottom: 2px solid transparent;
+    }
+    .lang-tab.active {
+      background-color: #ffffff;
+      color: #7c3aed;
+      border-bottom-color: #7c3aed;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(236, 72, 153, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); }
+    }
+  </style>
 </head>
-<body class="bg-gradient-to-br from-purple-200 to-pink-200 min-h-screen p-6 font-sans">
-  <div class="grid grid-cols-2 gap-6">
-    <!-- Code Block -->
-    <div>
-      <h2 class="text-2xl font-bold text-gray-800 mb-4">Python Code (Static View)</h2>
-      <textarea id="codeArea" class="w-full h-[600px] p-4 border border-purple-300 bg-white rounded-lg text-sm font-mono resize-none" readonly>
-class packet():
+<body class="bg-gradient-main min-h-screen p-6 font-sans text-gray-800">
 
-    def __init__(self):
-        self.items = []
+  <div class="max-w-7xl mx-auto">
+    <h1 class="text-5xl font-extrabold text-center mb-12 text-purple-900 drop-shadow-md">
+      Stack Data Structure Visualizer
+    </h1>
 
-    def pop(self):
-        print(f"popped : {self.items.pop()}")
-
-    def peek(self):
-        last = len(self.items) - 1
-        print(f" Top : {self.items[last]}")
-
-    def push(self,data):
-        self.items.append(data)
-        print(f"added..{data}")
-
-    def size(self):
-        return len(self.items) 
-
-    def disp(self):
-        print(f"My items : {self.items}")
-
-    def is_empty(self):
-        if self.size==0 :
-            print("Stack is empty")
-        else:
-            print("Not")
-
-Biscuit = packet()
-
-print(f"size {Biscuit.size()}")
-Biscuit.is_empty()
-Biscuit.disp()
-Biscuit.push(1)
-Biscuit.push(3)
-Biscuit.push(5)
-Biscuit.push(8)
-Biscuit.push(1)
-
-Biscuit.disp()
-
-Biscuit.peek()
-
-Biscuit.pop()
-Biscuit.pop()
-Biscuit.pop()
-
-Biscuit.disp()
-
-Biscuit.peek()
-      </textarea>
-      <button onclick="runStackOperations()" class="mt-4 px-6 py-2 bg-purple-600 text-white rounded shadow hover:bg-purple-700">Run</button>
-    </div>
-
-    <!-- Visualizer Output -->
-    <div>
-      <h2 class="text-2xl font-bold text-gray-800 mb-4">Stack Visualizer Output</h2>
-      <div id="output" class="h-48 overflow-y-auto mb-6 p-4 bg-white border border-purple-300 rounded-lg shadow-inner text-sm text-gray-800"></div>
-
-      <h3 class="text-lg font-semibold text-gray-700 mb-2">Current Stack (Top on Top)</h3>
-      <div id="stack" class="border-4 border-purple-300 bg-white rounded-xl p-6 min-h-[300px] w-60 flex flex-col-reverse items-center mx-auto shadow-md space-y-2 space-y-reverse"></div>
+    <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
+      <div class="flex flex-col lg:flex-row">
+        <!-- Language Tabs & Code View -->
+        <div class="flex-grow flex-shrink-0 p-6">
+          <div class="flex flex-wrap justify-around border-b-2 border-gray-200 mb-6">
+            <button class="lang-tab active" data-lang="python">Python</button>
+            <button class="lang-tab" data-lang="java">Java</button>
+            <button class="lang-tab" data-lang="cpp">C++</button>
+            <button class="lang-tab" data-lang="c">C</button>
+          </div>
+          <h2 class="text-2xl font-bold mb-4">Code View</h2>
+          <textarea id="codeArea" class="w-full h-[550px] p-4 border border-purple-300 bg-gray-50 rounded-lg text-sm font-mono resize-none shadow-inner" readonly></textarea>
+          <button onclick="runStackOperations()" class="mt-8 w-full px-6 py-4 bg-purple-700 text-white font-bold text-lg rounded-xl shadow-lg hover:bg-purple-800 transition-colors duration-200 transform hover:scale-105">
+            Run Stack Operations
+          </button>
+        </div>
+        
+        <!-- Visualizer & Output -->
+        <div class="flex-grow flex-shrink-0 bg-gray-100 p-8 rounded-tr-3xl rounded-br-3xl flex flex-col items-center">
+          <h2 class="text-2xl font-bold mb-4">Live Visualization</h2>
+          
+          <div class="relative flex-grow flex items-center justify-center">
+             <div id="stack-container" class="stack-container rounded-xl shadow-lg flex flex-col-reverse items-center justify-start space-y-4 space-y-reverse">
+              <!-- Stack elements will be rendered here -->
+            </div>
+             <div class="absolute bottom-6 text-gray-500 font-semibold">Top of Stack</div>
+          </div>
+          
+          <div class="mt-8 w-full">
+            <h3 class="text-xl font-semibold mb-2">Operation Log</h3>
+            <div id="output" class="h-48 overflow-y-auto p-4 bg-white border border-purple-300 rounded-lg shadow-inner text-sm text-gray-700 font-mono">
+              <div class='mb-1 text-gray-500'>Click 'Run Stack Operations' to start the visualization.</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
   <script>
-    class Packet {
+    // Data structures for each language's corrected code
+    const code = {
+      python: `class Stack:
+    """A simple Stack implementation using a Python list."""
+    def __init__(self):
+        self.items = []
+
+    def push(self, data):
+        """Adds an item to the top of the stack."""
+        self.items.append(data)
+        print(f"Pushed: {data}")
+
+    def pop(self):
+        """Removes and returns the top item."""
+        if self.is_empty():
+            print("Error: Stack is empty.")
+            return None
+        item = self.items.pop()
+        print(f"Popped: {item}")
+        return item
+
+    def peek(self):
+        """Returns the top item without removing it."""
+        if self.is_empty():
+            print("Error: Stack is empty.")
+            return None
+        item = self.items[-1]
+        print(f"Peek: {item}")
+        return item
+
+    def is_empty(self):
+        """Checks if the stack is empty."""
+        return len(self.items) == 0
+
+# --- Example Operations ---
+my_stack = Stack()
+my_stack.push(10)
+my_stack.push(20)
+my_stack.push(30)
+my_stack.push(40)
+my_stack.push(50)
+my_stack.peek()
+my_stack.pop()
+my_stack.push(60)
+my_stack.pop()
+my_stack.pop()
+my_stack.peek()
+`,
+      java: `import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * A simple Stack implementation using an ArrayList.
+ */
+public class Stack {
+    private List<Integer> items;
+
+    public Stack() {
+        this.items = new ArrayList<>();
+    }
+
+    public void push(int data) {
+        // Adds an item to the top of the stack.
+        items.add(data);
+        System.out.println("Pushed: " + data);
+    }
+
+    public Integer pop() {
+        // Removes and returns the top item.
+        if (isEmpty()) {
+            System.out.println("Error: Stack is empty.");
+            return null;
+        }
+        Integer item = items.remove(items.size() - 1);
+        System.out.println("Popped: " + item);
+        return item;
+    }
+
+    public Integer peek() {
+        // Returns the top item without removing it.
+        if (isEmpty()) {
+            System.out.println("Error: Stack is empty.");
+            return null;
+        }
+        Integer item = items.get(items.size() - 1);
+        System.out.println("Peek: " + item);
+        return item;
+    }
+
+    public boolean isEmpty() {
+        // Checks if the stack is empty.
+        return items.isEmpty();
+    }
+}
+
+// --- Example Operations (usually in a separate Main class) ---
+// Stack myStack = new Stack();
+// myStack.push(10);
+// myStack.push(20);
+// myStack.push(30);
+// myStack.push(40);
+// myStack.push(50);
+// myStack.peek();
+// myStack.pop();
+// myStack.push(60);
+// myStack.pop();
+// myStack.pop();
+// myStack.peek();
+`,
+      cpp: `#include <iostream>
+#include <vector>
+
+/**
+ * A simple Stack implementation using std::vector.
+ */
+class Stack {
+private:
+    std::vector<int> items;
+
+public:
+    void push(int data) {
+        // Adds an item to the top of the stack.
+        items.push_back(data);
+        std::cout << "Pushed: " << data << std::endl;
+    }
+
+    int pop() {
+        // Removes and returns the top item.
+        if (is_empty()) {
+            std::cout << "Error: Stack is empty." << std::endl;
+            return -1; // Sentinel value for error
+        }
+        int item = items.back();
+        items.pop_back();
+        std::cout << "Popped: " << item << std::endl;
+        return item;
+    }
+
+    int peek() {
+        // Returns the top item without removing it.
+        if (is_empty()) {
+            std::cout << "Error: Stack is empty." << std::endl;
+            return -1;
+        }
+        int item = items.back();
+        std::cout << "Peek: " << item << std::endl;
+        return item;
+    }
+
+    bool is_empty() {
+        // Checks if the stack is empty.
+        return items.empty();
+    }
+};
+
+// --- Example Operations ---
+// int main() {
+//     Stack my_stack;
+//     my_stack.push(10);
+//     my_stack.push(20);
+//     my_stack.push(30);
+//     my_stack.push(40);
+//     my_stack.push(50);
+//     my_stack.peek();
+//     my_stack.pop();
+//     my_stack.push(60);
+//     my_stack.pop();
+//     my_stack.pop();
+//     my_stack.peek();
+//     return 0;
+// }
+`,
+      c: `// Note: C does not have built-in classes.
+// This is a procedural implementation using a struct and an array.
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_SIZE 10
+
+typedef struct {
+    int items[MAX_SIZE];
+    int top;
+} Stack;
+
+void initialize(Stack* s) {
+    s->top = -1;
+}
+
+int is_empty(Stack* s) {
+    return s->top == -1;
+}
+
+void push(Stack* s, int data) {
+    // Adds an item to the top of the stack.
+    if (s->top == MAX_SIZE - 1) {
+        printf("Error: Stack Overflow!\\n");
+        return;
+    }
+    s->items[++s->top] = data;
+    printf("Pushed: %d\\n", data);
+}
+
+int pop(Stack* s) {
+    // Removes and returns the top item.
+    if (is_empty(s)) {
+        printf("Error: Stack Underflow!\\n");
+        return -1; // Sentinel value for error
+    }
+    int item = s->items[s->top--];
+    printf("Popped: %d\\n", item);
+    return item;
+}
+
+int peek(Stack* s) {
+    // Returns the top item without removing it.
+    if (is_empty(s)) {
+        printf("Error: Stack is empty!\\n");
+        return -1;
+    }
+    int item = s->items[s->top];
+    printf("Peek: %d\\n", item);
+    return item;
+}
+
+// --- Example Operations ---
+// int main() {
+//     Stack my_stack;
+//     initialize(&my_stack);
+//     push(&my_stack, 10);
+//     push(&my_stack, 20);
+//     push(&my_stack, 30);
+//     push(&my_stack, 40);
+//     push(&my_stack, 50);
+//     peek(&my_stack);
+//     pop(&my_stack);
+//     push(&my_stack, 60);
+//     pop(&my_stack);
+//     pop(&my_stack);
+//     peek(&my_stack);
+//     return 0;
+// }
+`
+    };
+
+    // Class to manage the stack visualization and operations
+    class StackVisualizer {
       constructor() {
         this.items = [];
-      }
-
-      push(data) {
-        this.items.push(data);
-        this.log(`added..${data}`);
-        this.renderStack();
-      }
-
-      pop() {
-        const removed = this.items.pop();
-        this.log(`popped : ${removed}`);
-        this.renderStack(true, removed);
-      }
-
-      peek() {
-        const top = this.items[this.items.length - 1];
-        this.log(`Top : ${top}`);
-      }
-
-      size() {
-        this.log(`size ${this.items.length}`);
-      }
-
-      disp() {
-        this.log(`My items : [${this.items.join(', ')}]`);
-      }
-
-      is_empty() {
-        this.log(this.items.length === 0 ? "Stack is empty" : "Not");
+        this.outputDiv = document.getElementById('output');
+        this.stackContainer = document.getElementById('stack-container');
+        this.log("Click 'Run Stack Operations' to start the visualization.");
       }
 
       log(message) {
-        const output = document.getElementById('output');
-        output.innerHTML += `<div class='mb-1'>> ${message}</div>`;
-        output.scrollTop = output.scrollHeight;
+        this.outputDiv.innerHTML += `<div class='mb-1'>&gt; ${message}</div>`;
+        this.outputDiv.scrollTop = this.outputDiv.scrollHeight;
       }
 
-      renderStack(animatePop = false, poppedItem = null) {
-        const container = document.getElementById('stack');
-        container.innerHTML = '';
-
+      renderStack() {
+        this.stackContainer.innerHTML = '';
         this.items.forEach((item, i) => {
           const el = document.createElement('div');
-          el.className = 'bg-purple-500 text-white px-6 py-2 rounded-lg mb-2 shadow-md transition-all duration-500 ease-in-out';
-          el.style.transitionDelay = `${i * 0.1}s`;
+          el.className = 'stack-element';
           el.innerText = item;
-          container.appendChild(el);
+          this.stackContainer.appendChild(el);
         });
+      }
 
-        if (animatePop && poppedItem !== null) {
-          const popEl = document.createElement('div');
-          popEl.innerText = poppedItem;
-          popEl.className = 'bg-red-500 text-white px-6 py-2 rounded-lg mb-2 shadow-md animate-bounce';
-          container.appendChild(popEl);
-          setTimeout(() => popEl.remove(), 2000);
+      async push(data) {
+        this.items.push(data);
+        this.log(`Pushed: ${data}`);
+        this.renderStack();
+        await new Promise(r => setTimeout(r, 1000));
+      }
+
+      async pop() {
+        if (this.items.length === 0) {
+          this.log("Error: Stack is empty.");
+          return;
+        }
+        const removed = this.items.pop();
+        this.log(`Popped: ${removed}`);
+        
+        // Animate the pop
+        const topElement = this.stackContainer.lastElementChild;
+        if (topElement) {
+          topElement.classList.add('popping');
+          await new Promise(r => setTimeout(r, 600));
+          topElement.remove();
+        }
+        await new Promise(r => setTimeout(r, 400));
+      }
+
+      async peek() {
+        if (this.items.length === 0) {
+          this.log("Error: Stack is empty.");
+          return;
+        }
+        const top = this.items[this.items.length - 1];
+        this.log(`Peek: ${top}`);
+        
+        // Highlight the peeked element with a pulse animation
+        const topElement = this.stackContainer.lastElementChild;
+        if (topElement) {
+          topElement.classList.add('peeking');
+          await new Promise(r => setTimeout(r, 2000));
+          topElement.classList.remove('peeking');
         }
       }
     }
 
-    async function runStackOperations() {
-      const delay = ms => new Promise(res => setTimeout(res, ms));
-      const biscuit = new Packet();
-      const ops = [
-        () => biscuit.size(),
-        () => biscuit.is_empty(),
-        () => biscuit.disp(),
-        () => biscuit.push(1),
-        () => biscuit.push(3),
-        () => biscuit.push(5),
-        () => biscuit.push(8),
-        () => biscuit.push(1),
-        () => biscuit.disp(),
-        () => biscuit.peek(),
-        () => biscuit.pop(),
-        () => biscuit.pop(),
-        () => biscuit.pop(),
-        () => biscuit.disp(),
-        () => biscuit.peek(),
-      ];
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+    const stackVisualizer = new StackVisualizer();
+    let currentLanguage = 'python';
 
-      for (const op of ops) {
-        op();
-        await delay(2000);
-      }
+    // Function to run the animated operations
+    async function runStackOperations() {
+      // Reset the state and UI
+      stackVisualizer.items = [];
+      stackVisualizer.outputDiv.innerHTML = '';
+      stackVisualizer.renderStack();
+      
+      stackVisualizer.log("--- Starting Operation Sequence ---");
+      await delay(1000);
+
+      // A simple, consistent sequence for visualization
+      await stackVisualizer.log("Pushing 10...");
+      await delay(500);
+      await stackVisualizer.push(10);
+      await stackVisualizer.log("Pushing 20...");
+      await delay(500);
+      await stackVisualizer.push(20);
+      await stackVisualizer.log("Pushing 30...");
+      await delay(500);
+      await stackVisualizer.push(30);
+      await stackVisualizer.log("Pushing 40...");
+      await delay(500);
+      await stackVisualizer.push(40);
+      await stackVisualizer.log("Pushing 50...");
+      await delay(500);
+      await stackVisualizer.push(50);
+      
+      await stackVisualizer.log("Calling peek()...");
+      await delay(500);
+      await stackVisualizer.peek();
+      
+      await stackVisualizer.log("Calling pop()...");
+      await delay(500);
+      await stackVisualizer.pop();
+
+      await stackVisualizer.log("Calling push(60)...");
+      await delay(500);
+      await stackVisualizer.push(60);
+
+      await stackVisualizer.log("Calling pop()...");
+      await delay(500);
+      await stackVisualizer.pop();
+      
+      await stackVisualizer.log("Calling pop()...");
+      await delay(500);
+      await stackVisualizer.pop();
+      
+      await stackVisualizer.log("Calling peek()...");
+      await delay(500);
+      await stackVisualizer.peek();
+
+      stackVisualizer.log("--- Operations Complete ---");
     }
+
+    // Function to handle language tab clicks
+    function switchLanguage(lang) {
+      if (lang === currentLanguage) return;
+      currentLanguage = lang;
+
+      document.querySelectorAll('.lang-tab').forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.dataset.lang === lang) {
+          tab.classList.add('active');
+        }
+      });
+
+      document.getElementById('codeArea').value = code[lang];
+      // Reset the visualizer on language switch
+      stackVisualizer.items = [];
+      stackVisualizer.outputDiv.innerHTML = '';
+      stackVisualizer.renderStack();
+      stackVisualizer.log("Click 'Run Stack Operations' to start the visualization.");
+    }
+
+    // Initial setup
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('codeArea').value = code.python;
+      
+      document.querySelectorAll('.lang-tab').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+          switchLanguage(e.target.dataset.lang);
+        });
+      });
+    });
   </script>
 </body>
 </html>
