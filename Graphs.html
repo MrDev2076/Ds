@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DFS, BFS & Dijkstra's Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .code-block {
+            background-color: #1f2937; /* Darker gray for code */
+            color: #d1d5db;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            font-size: 0.75rem; /* Smaller font for dense code */
+            overflow-y: auto;
+            white-space: pre-wrap;
+            line-height: 1.4;
+        }
+        .code-title {
+            color: #38bdf8; /* Sky-400 */
+            font-weight: 700;
+            display: block;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">Graph Traversal Visualizer (DFS, BFS & Dijkstra)</h1>
+
+        <div class="flex flex-col lg:flex-row gap-6">
+
+            <!-- Left Panel: Code & Input -->
+            <div class="lg:w-1/3 space-y-6">
+                <!-- Algorithm Code Reference -->
+                <div class="bg-white p-4 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-3">Algorithm Reference (Full Code)</h2>
+                    <div class="code-block h-96 overflow-y-scroll">
+                        <span class="code-title">C - DFS and BFS</span>
+                        // (Simplified C code for reference)
+                        #define MAX 10
+                        int graph[MAX][MAX], visited[MAX], n;
+                        void DFS(int v) {
+                            printf("%d ", v); visited[v] = 1;
+                            for (int i = 0; i < n; i++)
+                                if (graph[v][i] && !visited[i]) DFS(i);
+                        }
+                        void BFS(int start) {
+                            // ... queue logic ...
+                        }
+
+                        <span class="code-title">Python - DFS, BFS, and Dijkstra's</span>
+                        def dfs(graph, start, visited=None):
+                            if visited is None: visited = set()
+                            visited.add(start)
+                            print(start)
+                            for neighbor in graph[start]:
+                                if neighbor not in visited:
+                                    dfs(graph, neighbor, visited)
+
+                        def bfs(graph, start):
+                            visited = {start}
+                            queue = collections.deque([start])
+                            while queue:
+                                vertex = queue.popleft()
+                                print(vertex)
+                                for neighbor in graph[vertex]:
+                                    if neighbor not in visited:
+                                        visited.add(neighbor)
+                                        queue.append(neighbor)
+
+                        import heapq
+                        def dijkstra(graph, start):
+                            distances = {node: float('inf') for node in graph}
+                            distances[start] = 0
+                            pq = [(0, start)]  # (distance, node)
+
+                            while pq:
+                                current_dist, current_node = heapq.heappop(pq)
+                                if current_dist > distances[current_node]: continue
+
+                                for neighbor, weight in graph[current_node].items():
+                                    distance = current_dist + weight
+                                    if distance < distances[neighbor]:
+                                        distances[neighbor] = distance
+                                        heapq.heappush(pq, (distance, neighbor))
+                            return distances
+                    </div>
+                </div>
+
+                <!-- Graph Input -->
+                <div class="bg-white p-4 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-3">Graph Configuration (Weighted)</h2>
+                    <label for="graphInput" class="block text-sm font-medium text-gray-600 mb-1">Adjacency List (Node: Neighbor(Weight), separated by commas)</label>
+                    <textarea id="graphInput" rows="6" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-800"
+                              placeholder="Example: 0: 1(5), 2(1)&#10;1: 0(5), 3(2)&#10;2: 0(1), 4(3)&#10;3: 1(2)&#10;4: 2(3)"></textarea>
+                    <p class="text-xs text-gray-500 mt-1">Weights are ignored for DFS/BFS. Nodes must be indexed starting from 0.</p>
+                    <div class="flex space-x-2 mt-3">
+                        <button id="loadCustomGraph" class="w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
+                            Load Custom Graph
+                        </button>
+                        <button id="refreshGraph" class="w-1/2 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
+                            Refresh Graph
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Visualization & Controls -->
+            <div class="lg:w-2/3 space-y-6">
+                <!-- Visualization Canvas -->
+                <div class="bg-white p-4 rounded-xl shadow-xl">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-3">Graph Visualization</h2>
+                    <canvas id="graphCanvas" class="border border-gray-300 rounded-lg w-full" width="600" height="350"></canvas>
+                </div>
+
+                <!-- Controls & Output -->
+                <div class="bg-white p-4 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-3">Control & Status</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
+                        <!-- Start Node Input -->
+                        <div>
+                            <label for="startNodeInput" class="block text-sm font-medium text-gray-600">Start Node</label>
+                            <input type="number" id="startNodeInput" value="0" min="0" class="w-full p-2 border border-gray-300 rounded-lg text-gray-800">
+                        </div>
+                        <!-- Search Node Input -->
+                        <div>
+                            <label for="searchNodeInput" class="block text-sm font-medium text-gray-600">Search Node</label>
+                            <input type="number" id="searchNodeInput" placeholder="Optional" class="w-full p-2 border border-gray-300 rounded-lg text-gray-800">
+                        </div>
+                        <!-- Algorithm Select -->
+                        <div class="sm:col-span-2">
+                            <label for="algorithmSelect" class="block text-sm font-medium text-gray-600">Algorithm</label>
+                            <select id="algorithmSelect" class="w-full p-2 border border-gray-300 rounded-lg">
+                                <option value="DFS">Depth First Search (DFS)</option>
+                                <option value="BFS">Breadth First Search (BFS)</option>
+                                <option value="DIJKSTRA">Dijkstra's Algorithm (Shortest Path)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button id="runButton" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md disabled:opacity-50" disabled>
+                        Run Animation
+                    </button>
+
+                    <h3 class="text-lg font-medium text-gray-700 mt-4">Traversal Output:</h3>
+                    <div id="output" class="p-3 bg-gray-100 border border-gray-200 rounded-lg min-h-[3rem] text-gray-800 font-mono">
+                        <span class="text-gray-500">Press 'Update Graph' then 'Run' to begin.</span>
+                    </div>
+
+                    <h3 class="text-lg font-medium text-gray-700 mt-4">Current Queue/Stack/Priority Queue:</h3>
+                    <div id="statusQueue" class="p-3 bg-gray-100 border border-gray-200 rounded-lg min-h-[3rem] text-gray-800 font-mono overflow-x-auto whitespace-nowrap">
+                        <span class="text-gray-500">N/A</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Global Constants and Variables
+        const canvas = document.getElementById('graphCanvas');
+        const ctx = canvas.getContext('2d');
+        const graphInput = document.getElementById('graphInput');
+        const startNodeInput = document.getElementById('startNodeInput');
+        const searchNodeInput = document.getElementById('searchNodeInput');
+        const loadCustomGraphButton = document.getElementById('loadCustomGraph'); // Renamed
+        const refreshGraphButton = document.getElementById('refreshGraph'); // New
+        const runButton = document.getElementById('runButton');
+        const algorithmSelect = document.getElementById('algorithmSelect');
+        const outputDiv = document.getElementById('output');
+        const statusQueueDiv = document.getElementById('statusQueue');
+
+        const NODE_RADIUS = 15;
+        const INFINITY = 1e9;
+        const NODE_COLORS = {
+            DEFAULT: '#4b5563', // gray-600
+            VISITED: '#f59e0b', // amber-500 (Finalized/Processed)
+            EXPLORING: '#10b981', // emerald-500 (Current Node)
+            QUEUED: '#3b82f6', // blue-500 (In Queue/Unfinalized)
+            FOUND: '#ef4444', // red-500 (Search Target Found)
+        };
+
+        // Graph data structure: Map<Node, Map<Neighbor, Weight>>
+        let adjList = new Map();
+        let nodeCoords = {};
+        let nodeCount = 0;
+        let animationSteps = [];
+        let isAnimating = false;
+
+        // --- Core Graph and Visualization Functions ---
+
+        /**
+         * Draws the current state of the graph on the canvas.
+         * @param {Object} nodeStates - Current states for each node (e.g., {0: 'VISITED', 1: 'QUEUED'}).
+         * @param {Object} distances - Current shortest path distances (for Dijkstra).
+         */
+        function drawGraph(nodeStates = {}, distances = {}) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw Edges and Weights
+            ctx.lineWidth = 2;
+            for (const [u, neighbors] of adjList.entries()) {
+                const coordU = nodeCoords[u];
+                for (const [v, weight] of neighbors.entries()) {
+                    // Only draw edge once for undirected graph and ensure both nodes exist
+                    if (u < v && nodeCoords[u] && nodeCoords[v]) {
+                        const coordV = nodeCoords[v];
+
+                        // Draw Line
+                        ctx.strokeStyle = '#e5e7eb'; // gray-200
+                        ctx.beginPath();
+                        ctx.moveTo(coordU.x, coordU.y);
+                        ctx.lineTo(coordV.x, coordV.y);
+                        ctx.stroke();
+
+                        // Draw Weight Label
+                        const midX = (coordU.x + coordV.x) / 2;
+                        const midY = (coordU.y + coordV.y) / 2;
+
+                        ctx.fillStyle = '#1f2937'; // gray-800
+                        ctx.font = '600 10px Inter';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        
+                        // Add a small offset to the text
+                        const dx = coordV.x - coordU.x;
+                        const dy = coordV.y - coordU.y;
+                        const len = Math.sqrt(dx * dx + dy * dy);
+                        const offset = 12; // Distance from the line
+                        const angle = Math.atan2(dy, dx);
+                        
+                        const textX = midX - offset * Math.sin(angle);
+                        const textY = midY + offset * Math.cos(angle);
+
+                        // Draw background for contrast
+                        ctx.fillStyle = '#ffffffc0'; // Semi-transparent white
+                        ctx.fillRect(textX - 10, textY - 8, 20, 16);
+
+                        ctx.fillStyle = '#1f2937';
+                        ctx.fillText(weight.toString(), textX, textY);
+                    }
+                }
+            }
+
+            // 2. Draw Nodes and Labels
+            for (let i = 0; i < nodeCount; i++) {
+                const coord = nodeCoords[i];
+                if (!coord) continue;
+
+                const state = nodeStates[i] || 'DEFAULT';
+                const color = NODE_COLORS[state];
+
+                // Draw Node Circle
+                ctx.beginPath();
+                ctx.arc(coord.x, coord.y, NODE_RADIUS, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.fill();
+                ctx.strokeStyle = '#1f2937'; // gray-800
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Draw Node ID Label (Center of node)
+                ctx.fillStyle = state === 'DEFAULT' ? '#1f2937' : 'white';
+                ctx.font = '600 12px Inter';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(i.toString(), coord.x, coord.y);
+
+                // Draw Distance Label (Below node, for Dijkstra)
+                const distance = distances[i];
+                if (distance !== undefined) {
+                    const displayDist = distance === INFINITY ? 'Inf' : distance;
+                    ctx.fillStyle = '#1f2937';
+                    ctx.font = '400 10px Inter';
+                    ctx.fillText(`D:${displayDist}`, coord.x, coord.y + NODE_RADIUS + 10);
+                }
+            }
+        }
+
+        /**
+         * Generates coordinates for nodes, favoring a circular layout for general graphs.
+         */
+        function generateNodeCoordinates(count) {
+            const width = canvas.width;
+            const height = canvas.height;
+            const coords = {};
+
+            // Always use a circular layout now
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = Math.min(width, height) / 2.5;
+            for (let i = 0; i < count; i++) {
+                const angle = (i / count) * 2 * Math.PI - (Math.PI / 2); // Start at top
+                coords[i] = {
+                    x: centerX + radius * Math.cos(angle),
+                    y: centerY + radius * Math.sin(angle)
+                };
+            }
+            return coords;
+        }
+
+        /**
+         * Parses user input string into a weighted adjacency list.
+         */
+        function parseAndSetupGraph(input) {
+            const newAdjList = new Map();
+            let maxNode = -1;
+
+            const lines = input.trim().split('\n');
+            lines.forEach(line => {
+                const parts = line.split(':').map(s => s.trim());
+                if (parts.length !== 2) return;
+
+                const u = parseInt(parts[0]);
+                if (isNaN(u) || u < 0) return;
+
+                maxNode = Math.max(maxNode, u);
+
+                const neighborStrings = parts[1].split(',');
+                neighborStrings.forEach(s => {
+                    s = s.trim();
+                    if (!s) return;
+
+                    // Parse format: v(weight)
+                    const match = s.match(/(\d+)\((\d+)\)/);
+                    let v, weight;
+
+                    if (match) {
+                        v = parseInt(match[1]);
+                        weight = parseInt(match[2]);
+                    } else {
+                        // Unweighted fallback (weight 1)
+                        v = parseInt(s);
+                        weight = 1;
+                    }
+
+                    if (isNaN(v) || v < 0 || u === v) return; // Skip invalid/self-loop
+                    
+                    maxNode = Math.max(maxNode, v);
+
+                    // Add edge u -> v
+                    if (!newAdjList.has(u)) newAdjList.set(u, new Map());
+                    newAdjList.get(u).set(v, weight);
+
+                    // Ensure reverse edge (v -> u) for undirected graph (assuming undirected for traversal)
+                    if (!newAdjList.has(v)) newAdjList.set(v, new Map());
+                    newAdjList.get(v).set(u, weight);
+                });
+            });
+
+            nodeCount = maxNode + 1;
+            adjList = newAdjList;
+            nodeCoords = generateNodeCoordinates(nodeCount);
+
+            if (nodeCount > 0) {
+                runButton.disabled = false;
+                startNodeInput.max = nodeCount - 1;
+            } else {
+                runButton.disabled = true;
+            }
+
+            drawGraph();
+            outputDiv.innerHTML = '<span class="text-gray-500">Graph updated. Press \'Run\' to begin traversal.</span>';
+            statusQueueDiv.innerHTML = '<span class="text-gray-500">N/A</span>';
+        }
+        
+        /**
+         * Generates a random, connected, weighted graph for a default start.
+         */
+        function generateRandomGraph() {
+            const size = 6 + Math.floor(Math.random() * 3); // 6 to 8 nodes
+            const newAdjList = new Map();
+            for (let i = 0; i < size; i++) {
+                newAdjList.set(i, new Map());
+            }
+            
+            let nodes = Array.from({ length: size }, (_, i) => i);
+            let connected = new Set([nodes[0]]);
+            
+            // 1. Minimum Spanning Tree (guarantee connectivity)
+            for (let i = 1; i < size; i++) {
+                const u = nodes[i];
+                // Connect u to a random previously connected node (v)
+                const connectedNodesArray = Array.from(connected);
+                const v = connectedNodesArray[Math.floor(Math.random() * connectedNodesArray.length)];
+                
+                const weight = Math.floor(Math.random() * 10) + 1;
+                
+                newAdjList.get(u).set(v, weight);
+                newAdjList.get(v).set(u, weight);
+                connected.add(u);
+            }
+            
+            // 2. Add extra random edges for complexity
+            const numExtraEdges = size + Math.floor(Math.random() * size * 0.5);
+            for (let i = 0; i < numExtraEdges; i++) {
+                let u, v;
+                do {
+                    u = Math.floor(Math.random() * size);
+                    v = Math.floor(Math.random() * size);
+                } while (u === v || newAdjList.get(u).has(v));
+                
+                const weight = Math.floor(Math.random() * 10) + 1;
+                newAdjList.get(u).set(v, weight);
+                newAdjList.get(v).set(u, weight);
+            }
+
+            // Convert to string format for the textarea
+            let graphString = '';
+            for (let i = 0; i < size; i++) {
+                let nodeEntry = `${i}: `;
+                const neighbors = newAdjList.get(i);
+                
+                const sortedNeighbors = [...neighbors.keys()].sort((a, b) => a - b);
+                
+                const neighborList = sortedNeighbors
+                    .map(neighbor => `${neighbor}(${neighbors.get(neighbor)})`)
+                    .join(', ');
+                    
+                graphString += `${nodeEntry}${neighborList}\n`;
+            }
+            
+            return graphString.trim();
+        }
+
+        /**
+         * Generates a new random graph, updates the textarea, and sets up the visualization.
+         */
+        function loadNewRandomGraph() {
+            const graphString = generateRandomGraph();
+            graphInput.value = graphString;
+            parseAndSetupGraph(graphString);
+        }
+
+
+        // --- Traversal Algorithms (Recording Steps) ---
+
+        /**
+         * DFS that records visualization steps.
+         */
+        function recordDFS(startNode) {
+            // ... (DFS implementation remains the same)
+            const steps = [];
+            const visited = new Set();
+            const stack = [];
+
+            function DFS(v) {
+                if (visited.has(v)) return;
+
+                visited.add(v);
+                stack.push(v);
+
+                // Step 1: Visiting (Exploring)
+                steps.push({
+                    type: 'VISIT',
+                    node: v,
+                    status: 'EXPLORING',
+                    output: `Exploring Node ${v}`,
+                    stackState: [...stack]
+                });
+
+                // Get sorted neighbors for deterministic traversal (using only keys from the inner map)
+                const neighbors = adjList.get(v) ? [...adjList.get(v).keys()].sort((a, b) => a - b) : [];
+
+                for (const neighbor of neighbors) {
+                    if (!visited.has(neighbor)) {
+                        // Step 2: Edge Traversal (DFS-specific)
+                        steps.push({
+                            type: 'EDGE',
+                            from: v,
+                            to: neighbor,
+                            output: `Moving from ${v} to ${neighbor}`
+                        });
+                        DFS(neighbor);
+                    }
+                }
+
+                // Step 3: Finished with this node
+                stack.pop();
+                steps.push({
+                    type: 'FINISH',
+                    node: v,
+                    status: 'VISITED',
+                    output: `Finished exploring ${v}`,
+                    stackState: [...stack]
+                });
+            }
+
+            DFS(startNode);
+            return steps;
+        }
+
+        /**
+         * BFS that records visualization steps.
+         */
+        function recordBFS(startNode) {
+            // ... (BFS implementation remains the same)
+            const steps = [];
+            const visited = new Set();
+            const queue = [startNode];
+            visited.add(startNode);
+
+            // Initial state
+            steps.push({
+                type: 'VISIT',
+                node: startNode,
+                status: 'QUEUED',
+                output: `Starting BFS at Node ${startNode}`,
+                queueState: [startNode]
+            });
+
+            let head = 0;
+            while (head < queue.length) {
+                const current = queue[head++];
+
+                // Step 1: Dequeue/Processing current node
+                steps.push({
+                    type: 'PROCESS',
+                    node: current,
+                    status: 'EXPLORING',
+                    output: `Processing Node ${current}`,
+                    queueState: queue.slice(head)
+                });
+
+                // Get sorted neighbors
+                const neighbors = adjList.get(current) ? [...adjList.get(current).keys()].sort((a, b) => a - b) : [];
+
+                for (const neighbor of neighbors) {
+                    if (!visited.has(neighbor)) {
+                        visited.add(neighbor);
+
+                        // Step 2: Found/Queueing neighbor
+                        queue.push(neighbor);
+                        steps.push({
+                            type: 'ENQUEUE',
+                            node: neighbor,
+                            status: 'QUEUED',
+                            output: `Found neighbor ${neighbor}, adding to queue`,
+                            queueState: queue.slice(head)
+                        });
+                    }
+                }
+
+                // Step 3: Finished exploring current node
+                steps.push({
+                    type: 'FINISH',
+                    node: current,
+                    status: 'VISITED',
+                    output: `Finished processing ${current}`,
+                    queueState: queue.slice(head)
+                });
+            }
+
+            return steps;
+        }
+
+        /**
+         * Dijkstra's Algorithm that records visualization steps and tracks predecessors for path reconstruction.
+         */
+        function recordDijkstra(startNode) {
+            const steps = [];
+            const distances = new Array(nodeCount).fill(INFINITY);
+            const predecessors = new Array(nodeCount).fill(null); // Track shortest path predecessors
+            distances[startNode] = 0;
+
+            // Simple Priority Queue implementation: array of [distance, node]
+            let pq = [[0, startNode]];
+            const finalized = new Set(); // Nodes whose shortest path is finalized
+
+            // Initial state
+            steps.push({
+                type: 'INIT',
+                node: startNode,
+                status: 'EXPLORING',
+                output: `Starting Dijkstra at Node ${startNode}. Distance to ${startNode}: 0.`,
+                distances: [...distances],
+                pqState: JSON.stringify(pq.map(([d, n]) => `(${d},${n})`))
+            });
+
+            while (pq.length > 0) {
+                // Find node with minimum distance (simulated min-heap pop)
+                pq.sort((a, b) => a[0] - b[0]);
+                const [currentDist, u] = pq.shift();
+
+                if (finalized.has(u)) continue;
+
+                finalized.add(u);
+
+                // Step 1: Process current node
+                steps.push({
+                    type: 'PROCESS_DIJKSTRA',
+                    node: u,
+                    status: 'EXPLORING',
+                    output: `Finalizing distance for Node ${u} (${currentDist}).`,
+                    distances: [...distances],
+                    pqState: JSON.stringify(pq.map(([d, n]) => `(${d},${n})`))
+                });
+
+                const neighbors = adjList.get(u) || new Map();
+                for (const [v, weight] of neighbors.entries()) {
+                    if (finalized.has(v)) continue;
+
+                    const newDist = currentDist + weight;
+                    if (newDist < distances[v]) {
+                        distances[v] = newDist;
+                        predecessors[v] = u; // *** NEW: Update predecessor ***
+
+                        // Step 2: Relaxation/Distance Update
+                        steps.push({
+                            type: 'RELAX',
+                            node: v,
+                            from: u,
+                            output: `Relaxing edge ${u}-${v}. New distance to ${v}: ${newDist}.`,
+                            distances: [...distances],
+                            pqState: JSON.stringify(pq.map(([d, n]) => `(${d},${n})`))
+                        });
+
+                        // Add/Update Priority Queue (simulated)
+                        pq.push([newDist, v]);
+                    }
+                }
+            }
+
+            // Final step: Include predecessors for path reconstruction
+            steps.push({
+                type: 'FINAL',
+                output: "Dijkstra's Algorithm complete.",
+                distances: [...distances],
+                predecessors: [...predecessors] // *** NEW: Store final predecessors ***
+            });
+
+            return steps;
+        }
+
+        // --- Animation and Control ---
+
+        /**
+         * Executes the stored animation steps one by one.
+         */
+        async function runAnimation(steps) {
+            if (isAnimating) return;
+
+            isAnimating = true;
+            runButton.disabled = true;
+            loadCustomGraphButton.disabled = true;
+            refreshGraphButton.disabled = true;
+
+            const algorithm = algorithmSelect.value;
+            const searchTarget = searchNodeInput.value.trim() !== '' ? parseInt(searchNodeInput.value) : null;
+            const startNode = parseInt(startNodeInput.value);
+
+            // Reset Visualization states
+            let nodeStates = {};
+            let traversalOutput = [];
+            let distances = {};
+
+            // Helper function to update UI and wait
+            const updateUI = (delay = 600) => new Promise(resolve => {
+                const currentOutput = traversalOutput.join(', ');
+                outputDiv.textContent = currentOutput || 'Traversal Path...';
+
+                // Check for Search Target Match and highlight
+                if (searchTarget !== null && nodeStates[searchTarget] === 'EXPLORING') {
+                    nodeStates[searchTarget] = 'FOUND';
+                }
+
+                drawGraph(nodeStates, distances);
+                setTimeout(resolve, delay);
+            });
+
+            // Set initial state (all default) and draw
+            drawGraph();
+            await updateUI(100);
+
+            // Process each step
+            for (const step of steps) {
+                if (!isAnimating) break;
+
+                const delay = 700;
+                let statusText = 'N/A';
+
+                // --- Common Steps (DFS/BFS/Dijkstra) ---
+                if (step.node !== undefined) {
+                    nodeStates[step.node] = step.status;
+                }
+                
+                // --- Dijkstra Specific Updates ---
+                if (algorithm === 'DIJKSTRA') {
+                    distances = {};
+                    if (step.distances) {
+                        step.distances.forEach((d, i) => distances[i] = d);
+                    }
+                    // Mark as VISITED/FINALIZED when processing (EXPLORING state is for current check)
+                    if (step.type === 'PROCESS_DIJKSTRA') {
+                         nodeStates[step.node] = 'VISITED'; 
+                    }
+                    if (step.pqState) {
+                         statusText = `<span class="font-bold">Priority Queue:</span> [ ${step.pqState.replace(/"/g, '')} ]`;
+                    }
+                }
+
+                // --- Traversal Output Update ---
+                if (step.type === 'VISIT' || step.type === 'PROCESS') {
+                    if (traversalOutput[traversalOutput.length - 1] !== step.node) {
+                         traversalOutput.push(step.node);
+                    }
+                }
+
+                // --- DFS/BFS Status (Queue/Stack) Update ---
+                if (algorithm !== 'DIJKSTRA') {
+                    if (step.queueState || step.stackState) {
+                        const data = step.queueState || step.stackState;
+                        const label = algorithm === 'DFS' ? 'Stack' : 'Queue';
+                        statusText = `<span class="font-bold">${label}:</span> [ ${data.join(', ')} ]`;
+                    }
+                }
+                
+                statusQueueDiv.innerHTML = statusText;
+
+                // Update visualization and wait
+                await updateUI(delay);
+
+                // --- Final Step Handling ---
+                if (step.type === 'FINAL') {
+                    outputDiv.textContent = step.output;
+                }
+            }
+
+            // --- FINAL OUTPUT MESSAGE ---
+            isAnimating = false;
+            runButton.disabled = false;
+            loadCustomGraphButton.disabled = false;
+            refreshGraphButton.disabled = false;
+
+            let finalMessage = `Traversal Complete: ${traversalOutput.join(', ')}`;
+            
+            const lastStep = steps[steps.length - 1];
+
+            if (algorithm === 'DIJKSTRA' && searchTarget !== null) {
+                const finalDistances = lastStep.distances;
+                const finalPredecessors = lastStep.predecessors;
+
+                if (finalDistances[searchTarget] === INFINITY) {
+                    finalMessage = `Dijkstra's Complete. Node ${searchTarget} is **unreachable** from Node ${startNode}.`;
+                } else {
+                    let path = [];
+                    let curr = searchTarget;
+                    // Reconstruct path backwards
+                    while (curr !== null) {
+                        path.push(curr);
+                        curr = finalPredecessors[curr];
+                    }
+                    path.reverse();
+                    
+                    finalMessage = `Dijkstra's **Shortest Path** from ${startNode} to ${searchTarget}: **${path.join(' -> ')}** (Cost: **${finalDistances[searchTarget]}**)`;
+                }
+            } else if (searchTarget !== null) {
+                finalMessage += ` (Target ${searchTarget} status: ${nodeStates[searchTarget] === 'FOUND' ? 'Found' : 'Not Found/Visited'})`;
+            }
+
+            outputDiv.innerHTML = finalMessage;
+            statusQueueDiv.innerHTML = '<span class="text-gray-500">N/A (Process Complete)</span>';
+        }
+
+        /**
+         * Main execution handler.
+         */
+        function handleRun() {
+            if (isAnimating) {
+                isAnimating = false;
+                runButton.textContent = 'Run Animation';
+                return;
+            }
+
+            const startNode = parseInt(startNodeInput.value);
+            if (isNaN(startNode) || startNode < 0 || startNode >= nodeCount) {
+                 outputDiv.textContent = `Error: Start Node ${startNodeInput.value} is invalid. Choose a node between 0 and ${nodeCount-1}.`;
+                 return;
+            } else if (nodeCount === 0) {
+                 outputDiv.textContent = "Error: Please update a valid graph first.";
+                 return;
+            }
+
+            const algorithm = algorithmSelect.value;
+            runButton.textContent = 'Stop Animation';
+
+            // 1. Record all steps
+            if (algorithm === 'DFS') {
+                animationSteps = recordDFS(startNode);
+            } else if (algorithm === 'BFS') {
+                animationSteps = recordBFS(startNode);
+            } else if (algorithm === 'DIJKSTRA') {
+                animationSteps = recordDijkstra(startNode);
+            }
+
+            // 2. Start animation
+            runAnimation(animationSteps);
+        }
+
+        // --- Initialization and Event Listeners ---
+
+        function initialize() {
+            // Load a random, connected graph on startup
+            loadNewRandomGraph();
+
+            // Set canvas height to be fully responsive
+            canvas.width = canvas.parentElement.clientWidth - 32; // -32 for padding
+            canvas.height = 350;
+
+            loadCustomGraphButton.addEventListener('click', () => {
+                if (isAnimating) {
+                    isAnimating = false;
+                    runButton.textContent = 'Run Animation';
+                }
+                parseAndSetupGraph(graphInput.value);
+            });
+            
+            refreshGraphButton.addEventListener('click', () => {
+                if (isAnimating) {
+                    isAnimating = false;
+                    runButton.textContent = 'Run Animation';
+                }
+                loadNewRandomGraph();
+            });
+
+            runButton.addEventListener('click', handleRun);
+
+            // Ensure start node input respects max node count
+            startNodeInput.addEventListener('input', () => {
+                 const val = parseInt(startNodeInput.value);
+                 if (val < 0) startNodeInput.value = 0;
+                 if (val >= nodeCount && nodeCount > 0) startNodeInput.value = nodeCount - 1;
+            });
+        }
+
+        // Start everything on page load
+        initialize();
+
+    </script>
+</body>
+</html>
